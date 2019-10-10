@@ -267,6 +267,11 @@ void RobotControldlg::OnBnClickedBtnJ1xadd()
 	CString sDistance;
 	CString sMSG;
 	GetDlgItemText(IDC_EDIT_JOGDis, sDistance);
+	if (FALSE == pGlobal->IsDoubleNumber(sDistance))
+	{
+		AfxMessageBox(_T("请输入数字"));
+		return;
+	}
 	if (Sigle_MOLDE ==iAxisModle)//机器人单轴运动
 	{
 		sMSG = _T("#,S,1,")+ sDistance+ _T(",@");
@@ -284,6 +289,11 @@ void RobotControldlg::OnBnClickedBtnJ1xsub()
 	CString sDistance;
 	CString sMSG;
 	GetDlgItemText(IDC_EDIT_JOGDis, sDistance);
+	if (FALSE == pGlobal->IsDoubleNumber(sDistance))
+	{
+		AfxMessageBox(_T("请输入数字"));
+		return;
+	}
 	if (Sigle_MOLDE == iAxisModle)//机器人单轴运动
 	{
 		sMSG = _T("#,S,1,-") + sDistance + _T(",@");
@@ -301,6 +311,11 @@ void RobotControldlg::OnBnClickedBtnJ2yadd()
 	CString sDistance;
 	CString sMSG;
 	GetDlgItemText(IDC_EDIT_JOGDis, sDistance);
+	if (FALSE == pGlobal->IsDoubleNumber(sDistance))
+	{
+		AfxMessageBox(_T("请输入数字"));
+		return;
+	}
 	if (Sigle_MOLDE == iAxisModle)//机器人单轴运动
 	{
 		sMSG = _T("#,S,2,") + sDistance + _T(",@");
@@ -318,6 +333,11 @@ void RobotControldlg::OnBnClickedBtnJ2ysub()
 	CString sDistance;
 	CString sMSG;
 	GetDlgItemText(IDC_EDIT_JOGDis, sDistance);
+	if (FALSE == pGlobal->IsDoubleNumber(sDistance))
+	{
+		AfxMessageBox(_T("请输入数字"));
+		return;
+	}
 	if (Sigle_MOLDE == iAxisModle)//机器人单轴运动
 	{
 		sMSG = _T("#,S,2,-") + sDistance + _T(",@");
@@ -335,6 +355,11 @@ void RobotControldlg::OnBnClickedBtnJ3zadd()
 	CString sDistance;
 	CString sMSG;
 	GetDlgItemText(IDC_EDIT_JOGDis, sDistance);
+	if (FALSE == pGlobal->IsDoubleNumber(sDistance))
+	{
+		AfxMessageBox(_T("请输入数字"));
+		return;
+	}
 	if (Sigle_MOLDE == iAxisModle)//机器人单轴运动
 	{
 		sMSG = _T("#,S,3,") + sDistance + _T(",@");
@@ -352,6 +377,12 @@ void RobotControldlg::OnBnClickedBtnJ3zsub()
 	CString sDistance;
 	CString sMSG;
 	GetDlgItemText(IDC_EDIT_JOGDis, sDistance);
+	if (FALSE == pGlobal->IsDoubleNumber(sDistance))
+	{
+		AfxMessageBox(_T("请输入数字"));
+		return;
+	}
+
 	if (Sigle_MOLDE == iAxisModle)//机器人单轴运动
 	{
 		sMSG = _T("#,S,3,-") + sDistance + _T(",@");
@@ -369,6 +400,11 @@ void RobotControldlg::OnBnClickedBtnJ4rxadd()
 	CString sDistance;
 	CString sMSG;
 	GetDlgItemText(IDC_EDIT_JOGDis, sDistance);
+	if (FALSE == pGlobal->IsDoubleNumber(sDistance))
+	{
+		AfxMessageBox(_T("请输入数字"));
+		return;
+	}
 	if (Sigle_MOLDE == iAxisModle)//机器人单轴运动
 	{
 		sMSG = _T("#,S,4,") + sDistance + _T(",@");
@@ -385,6 +421,11 @@ void RobotControldlg::OnBnClickedBtnJ4rxsub()
 	CString sDistance;
 	CString sMSG;
 	GetDlgItemText(IDC_EDIT_JOGDis, sDistance);
+	if (FALSE == pGlobal->IsDoubleNumber(sDistance))
+	{
+		AfxMessageBox(_T("请输入数字"));
+		return;
+	}
 	if (Sigle_MOLDE == iAxisModle)//机器人单轴运动
 	{
 		sMSG = _T("#,S,4,-") + sDistance + _T(",@");
@@ -402,6 +443,11 @@ void RobotControldlg::OnBnClickedBtnJ5ryadd()
 	CString sDistance;
 	CString sMSG;
 	GetDlgItemText(IDC_EDIT_JOGDis, sDistance);
+	if (FALSE == pGlobal->IsDoubleNumber(sDistance))
+	{
+		AfxMessageBox(_T("请输入数字"));
+		return;
+	}
 	if (Sigle_MOLDE == iAxisModle)//机器人单轴运动
 	{
 		sMSG = _T("#,S,5,") + sDistance + _T(",@");
@@ -419,6 +465,11 @@ void RobotControldlg::OnBnClickedBtnJ5rysub()
 	CString sDistance;
 	CString sMSG;
 	GetDlgItemText(IDC_EDIT_JOGDis, sDistance);
+	if (FALSE == pGlobal->IsDoubleNumber(sDistance))
+	{
+		AfxMessageBox(_T("请输入数字"));
+		return;
+	}
 	if (Sigle_MOLDE == iAxisModle)//机器人单轴运动
 	{
 		sMSG = _T("#,S,5,-") + sDistance + _T(",@");
@@ -437,6 +488,11 @@ void RobotControldlg::OnBnClickedBtnJ6rzadd()
 	CString sDistance;
 	CString sMSG;
 	GetDlgItemText(IDC_EDIT_JOGDis, sDistance);
+	if (FALSE == pGlobal->IsDoubleNumber(sDistance))
+	{
+		AfxMessageBox(_T("请输入数字"));
+		return;
+	}
 	if (Sigle_MOLDE == iAxisModle)//机器人单轴运动
 	{
 		sMSG = _T("#,S,6,") + sDistance + _T(",@");
@@ -454,6 +510,11 @@ void RobotControldlg::OnBnClickedBtnJ6rzsub()
 	CString sDistance;
 	CString sMSG;
 	GetDlgItemText(IDC_EDIT_JOGDis, sDistance);
+	if (FALSE == pGlobal->IsDoubleNumber(sDistance))
+	{
+		AfxMessageBox(_T("请输入数字"));
+		return;
+	}
 	if (Sigle_MOLDE == iAxisModle)//机器人单轴运动
 	{
 		sMSG = _T("#,S,6,-") + sDistance + _T(",@");
@@ -500,9 +561,18 @@ void RobotControldlg::PosListIni()
 	m_PosShow.InsertItem(0, _T("料盘中转位置0"));//插入行
 	for (int i = 0; i < 40; i++)
 	{
-		str.Format(_T("%d"), i+1);
-		m_PosShow.InsertItem(i*2+ 1, _T("取料位置")+str);//插入行
-		m_PosShow.InsertItem(i*2 + 2, _T("放料位置")+str);//插入行
+		if (i<20)
+		{
+			str.Format(_T("%d"), i+1);
+		    m_PosShow.InsertItem(i*2+ 1, _T("取料(出库1_")+str+_T(")"));//插入行
+		    m_PosShow.InsertItem(i*2 + 2, _T("放料(入库1_")+str+_T(")"));//插入行
+		}
+		else
+		{
+			str.Format(_T("%d"), i - 20 + 1);
+			m_PosShow.InsertItem(i * 2 + 1, _T("取料(出库2_") + str + _T(")"));//插入行
+			m_PosShow.InsertItem(i * 2 + 2, _T("放料(入库2_") + str + _T(")"));//插入行
+		}		
 	}
 }
 
@@ -522,8 +592,8 @@ void RobotControldlg::ReadPosFromINI()
 	CFileFind finder;
 	CString str;
 	CString sSection, sKeyname;
-	//for (int i = 0; i < 81; i++)
-	for (int i = 0; i < iProcessNum * 2 + 1; i++)//不刷新全部数据，只保存当前要用的数据，否则保存的时间太久了
+	//for (int i = 0; i < iProcessNum * 2 + 1; i++)//不刷新全部数据，只保存当前要用的数据，否则保存的时间太久了
+	for (int i = 0; i < 81; i++)	
 	{
 		sSection.Format(_T("Funtion_POS_%d"), i);
 		for (int j = 0; j < 7; j++)
@@ -542,8 +612,8 @@ void RobotControldlg::WritePosToINI()
 	CFileFind finder;
 	CString str;
 	CString sSection, sKeyname;
-	//for (int i = 0; i < 81; i++)
-	for (int i = 0; i < iProcessNum*2+1; i++)//不保存全部数据，只保存当前要用的数据，否则保存的时间太久了
+	//for (int i = 0; i < iProcessNum*2+1; i++)//不保存全部数据，只保存当前要用的数据，否则保存的时间太久了
+	for (int i = 0; i < 81; i++)
 	{
 		sSection.Format(_T("Funtion_POS_%d"), i);
 		for (int j = 0; j < 7; j++)
@@ -1124,6 +1194,10 @@ bool RobotControldlg::IniIOClamp()
 {
 	CString sMSG;
 	int ret;
+	RBTIOSet(29);//报警复位
+	Sleep(100);
+	RBTIOReset(29);//报警复位信号清除
+	Sleep(100);
 	RBTIOSet(30);//电爪伺服ON
 	Sleep(100);
 	//ret = RBTIORead(12);//伺服完成

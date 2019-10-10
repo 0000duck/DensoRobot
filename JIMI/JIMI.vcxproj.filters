@@ -75,6 +75,39 @@
     <ClInclude Include="AutoUIdlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="UWTestdlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientSocket_UW.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="json\autolink.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="json\config.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="json\features.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="json\forwards.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="json\json.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="json\reader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="json\value.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="json\writer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ForStruct.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="JIMI.cpp">
@@ -126,6 +159,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="AutoUIdlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="UWTestdlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientSocket_UW.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

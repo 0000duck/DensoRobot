@@ -73,13 +73,11 @@ void CNewButton::Red()
 	
 	if (Status != 0)
 	{
-		SetFont(110, _T("隶书"));
+		SetFont(110, _T("黑体"));
 		SetTextColor(RGB(20,20,20));
-		SetBkColor(RGB(255,0,0));
+		SetBkColor(RGB(254,67,0));
 		Status = 0;
-	}
-	
-	
+	}	
 }
 
 void CNewButton::Gray()
@@ -99,9 +97,9 @@ void CNewButton::Green()
 {
 	if (Status != 1)
 	{
-		SetFont(110, _T("隶书"));
+		SetFont(110, _T("黑体"));
 		SetTextColor(RGB(20,20,20));
-		SetBkColor(RGB(0,255,0));
+		SetBkColor(RGB(6,255,67));
 		Status = 1;
 	}
 	
@@ -123,7 +121,7 @@ void CNewButton::Blank()
 {
 	if (Status != 3)
 	{
-		SetFont(110, _T("隶书"));
+		SetFont(110, _T("黑体"));
 		SetTextColor(RGB(20,20,20));
 		SetBkColor(RGB(235,235,235));
 		Status = 3;

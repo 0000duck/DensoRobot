@@ -5,7 +5,9 @@
 
 #include "stdafx.h"
 #include "JIMIDlg.h"
-
+#include <afxpriv.h>
+#include <afxsock.h>
+#include <string.h>
 CJIMIDlg* pGlobal = NULL;
 
 //CJIMIDlg* pGlobal = (CJIMIDlg*)AfxGetApp()->GetMainWnd();
@@ -61,4 +63,37 @@ void CStringSplit(CString &strSource, CString *strDes, CString strSplitChar)
 		}
 		n++;
 	}
+}
+
+string toString(CString cs) 
+{
+#ifdef _UNICODE
+
+	//如果是unicode工程
+	USES_CONVERSION;
+	std::string str(W2A(cs));
+	return str;
+#else
+	//如果是多字节工程 
+	std::string str(cs.GetBuffer());
+	cs.ReleaseBuffer();
+	return str;
+
+#endif // _UNICODE 
+}
+
+CString toCString(string str) 
+{
+#ifdef _UNICODE
+	//如果是unicode工程
+	USES_CONVERSION; CString s(str.c_str());
+	CString ans(str.c_str());
+	return ans;
+#else
+	//如果是多字节工程 
+	//string 转 CString
+	CString ans;
+	ans.Format("%s", str.c_str());
+	return ans;
+#endif // _UNICODE  
 }

@@ -158,12 +158,18 @@ void ClientSocket_Robot::DataProcess()
 		str = sRecvData.Mid(strpos + 1, Recvlen - strpos);
 		if (_T("1") == str)
 		{
+			SetEvent(pGlobal->Handle_FinishPOS[0]);
 		}
 		else if (_T("2") == str)
 		{
 			pGlobal->AddToErrorList(_T("目标运动位置已超出安全位置！！！"));
+			SetEvent(pGlobal->Handle_FinishPOS[1]);
 		}
-		SetEvent(pGlobal->Handle_FinishPOS[0]);
+		else
+		{
+			SetEvent(pGlobal->Handle_FinishPOS[0]);
+		}
+		
 	}
 	else if (_T("RETI") == sText)
 	{   //运动返回处理

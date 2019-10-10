@@ -62,6 +62,8 @@
 
 //类型转换
 char * CstringToChar(CString str);//cstring 转换成char *
+string toString(CString cs);
+CString toCString(string str);
 void CStringSplit(CString &strSource, CString *strDes, CString strSplitChar);//split函数的应用
 
 #define Sigle_MOLDE 0

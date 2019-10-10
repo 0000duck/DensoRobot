@@ -82,6 +82,12 @@ bool ClientSocket_VisionMark::Config()
 	{
 		BOOL Bret = Connect(sIP, iPort);
 		DWORD nErrno = GetLastError();
+		//if (m_hSocket == INVALID_SOCKET)
+		//{
+		//	pGlobal->AddToErrorList(_T("VISION SOCEKT¡¨Ω” ß∞‹£°£°"));
+		//	Close();
+		//	return false;
+		//}
 		m_bConnected = TRUE;
 		return true;
 	}

@@ -93,6 +93,8 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>false</SDLCheck>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -115,6 +117,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_WINDOWS;_DEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -193,10 +196,20 @@
     <ClInclude Include="CircleButton.h" />
     <ClInclude Include="ClientSocket_BaseRBT.h" />
     <ClInclude Include="ClientSocket_Robot.h" />
+    <ClInclude Include="ClientSocket_UW.h" />
     <ClInclude Include="ClientSocket_VisionMark.h" />
     <ClInclude Include="DBConfig.h" />
+    <ClInclude Include="ForStruct.h" />
     <ClInclude Include="JIMI.h" />
     <ClInclude Include="JIMIDlg.h" />
+    <ClInclude Include="json\autolink.h" />
+    <ClInclude Include="json\config.h" />
+    <ClInclude Include="json\features.h" />
+    <ClInclude Include="json\forwards.h" />
+    <ClInclude Include="json\json.h" />
+    <ClInclude Include="json\reader.h" />
+    <ClInclude Include="json\value.h" />
+    <ClInclude Include="json\writer.h" />
     <ClInclude Include="NewButton.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="RobotControldlg.h" />
@@ -204,6 +217,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="UserLogin.h" />
+    <ClInclude Include="UWTestdlg.h" />
     <ClInclude Include="VisionTestdlg.h" />
   </ItemGroup>
   <ItemGroup>
@@ -214,6 +228,7 @@
     <ClCompile Include="CircleButton.cpp" />
     <ClCompile Include="ClientSocket_BaseRBT.cpp" />
     <ClCompile Include="ClientSocket_Robot.cpp" />
+    <ClCompile Include="ClientSocket_UW.cpp" />
     <ClCompile Include="ClientSocket_VisionMark.cpp" />
     <ClCompile Include="DBConfig.cpp" />
     <ClCompile Include="JIMI.cpp" />
@@ -228,6 +243,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="UserLogin.cpp" />
+    <ClCompile Include="UWTestdlg.cpp" />
     <ClCompile Include="VisionTestdlg.cpp" />
   </ItemGroup>
   <ItemGroup>

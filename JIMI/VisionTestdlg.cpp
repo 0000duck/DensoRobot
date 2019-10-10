@@ -132,7 +132,7 @@ int VisionTestdlg::GoVisionReturnPos()
 	{
 		return 0;
 	}
-	//ret = pGlobal->RBTCTdlg.SingleAxisMove(Axis_6_RZ, sRomateAngle);
+	//ret = pGlobal->RBTCTdlg.SingleAxisMove(Axis_3_Z, sRomateAngle);
 	//if (!ret)
 	//{
 	//	return 0;
@@ -265,7 +265,7 @@ void VisionTestdlg::OnBnClickedBtnConvisonsocket()
 	    pGlobal->VisMarkSocekt.sIP = sText;
 		WritePrivateProfileString(_T("VisionSocekt"), _T("IP"), sText, _T(".\\SystemInfo.ini"));
 		GetDlgItemText(IDC_EDIT_VisionPort, sText);
-		WritePrivateProfileString(_T("VisionSocekt"), _T("8989"), sText, _T(".\\SystemInfo.ini"));
+		WritePrivateProfileString(_T("VisionSocekt"), _T("Port"), sText, _T(".\\SystemInfo.ini"));
 		pGlobal->VisMarkSocekt.iPort = _ttoi(sText);
 		pGlobal->VisMarkSocekt.Config();
 	//	pGlobal->bVisionCon = true;

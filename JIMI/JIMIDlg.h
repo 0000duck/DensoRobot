@@ -10,10 +10,12 @@
 #include "NewButton.h"
 #include "RobotControldlg.h"
 #include "VisionTestdlg.h"
+#include "UWTestdlg.h"
 #include "AutoUIdlg.h"
 #include "ClientSocket_Robot.h"
 #include "ClientSocket_BaseRBT.h"
 #include "ClientSocket_VisionMark.h"
+#include "ClientSocket_UW.h"
 #include <map>
 
 #include "afxwin.h"
@@ -60,7 +62,9 @@ public:
 	ClientSocket_Robot RbtSocket;
 	ClientSocket_BaseRBT BaseRbtSocket;
 	ClientSocket_VisionMark VisMarkSocekt;
+	ClientSocket_UW UWSocekt;
 	bool bVisionCon;//是否启用视觉
+	bool bUWCon;//是否启用视觉
 	//串口模块
 	HANDLE port1handler;
 	HANDLE InitCom(CString comName);//初始化串口
@@ -82,9 +86,12 @@ public:
 	static UINT InitialALLThread(LPVOID pParam);
 	static UINT AutoRunThread(LPVOID pParam);
 	static UINT CheckRbtMoveSocketAliveThread(LPVOID pParam);
-	int MainRunProgram();//return 1234567分别对应相应点位，则显示到位异常
+	int UW_OFF_MainRunProgram();//return 1234567分别对应相应点位，则显示到位异常,不带UW跑的
+	int UW_ON_MainRunProgram();//return 1234567分别对应相应点位，则显示到位异常,不带UW跑的
 	bool InitialALL();//return 1234567分别对应相应点位，则显示到位异常
 	int iRbtStatue;//机器人状态，0123456
+
+	int UW_OUT_IN_ROBOT_Process();//UW出库机械臂取料流程
 
 	CString m_PCName, m_PCIP;
 	void FontInit();//初始化字体
@@ -107,15 +114,18 @@ public:
 	//初始化事件
 	void EventInitial();
 
+	void ShowAutouidlg();//自动运行情况下，切换至自动运行界面
 	CListBox m_LIST_Run;
 	CListBox m_LIST_Warning;
 	BOOL IsNumber(const CString& strTest);
+	BOOL IsDoubleNumber(const CString& strTest);
 	//主tab模块
 	CTabCtrl m_Maintab;
 	void initMainTab();
 	RobotControldlg RBTCTdlg;
 	VisionTestdlg Visiondlg;
 	AutoUIdlg Autouidlg;
+	UWTestdlg UWdlg;
 
 protected:
 	afx_msg LRESULT OnRunlog(WPARAM wParam, LPARAM lParam);
@@ -137,8 +147,8 @@ public:
 	CString strpcip, strpcname;//主机名称和ip
 
 	CNewButton m_StateView;
-	CNewButton m_OKView;
-	CNewButton m_OverView;
+	CNewButton m_UWView;
+	CNewButton m_VisionView;
 	CNewButton m_NullView;
 	CNewButton m_DownView;
 	
@@ -150,6 +160,7 @@ public:
 	HANDLE Handle_FinishPOS[2];//0为正常返回，1为停止返回事件触发
 	HANDLE Handle_RBTReadIO[3];//1为正常ON ，0为OFF，3为读取全部IO
 	HANDLE Handle_VisionRetPOS;
+	HANDLE Handle_UWRetData;
 
 	afx_msg void OnBnClickedButtonComok2();
 	virtual BOOL DestroyWindow();
@@ -158,5 +169,7 @@ public:
 	afx_msg void OnBnClickedBtmStop();
 	afx_msg void OnBnClickedBtmInitialall();
 	afx_msg void OnStnClickedStaticlogo();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };
 

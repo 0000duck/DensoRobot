@@ -35,14 +35,12 @@ END_MESSAGE_MAP()
 // AutoUIdlg 消息处理程序
 
 
-
-
 BOOL AutoUIdlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
-	//SetTimer(1,500,NULL);
+//	SetTimer(1,500,NULL);
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
 }
@@ -87,12 +85,12 @@ void AutoUIdlg::OnTimer(UINT_PTR nIDEvent)
 		case RbtGet:
 			dc.SelectObject(m_pBmp[0]);//加载位图
 			pDC->BitBlt(0, 0, bs.bmWidth, bs.bmHeight, &dc, 0, 0, SRCCOPY);//显示位图
-			SetDlgItemText(IDC_STATIC_RbtStatue, _T("取料中"));
+			SetDlgItemText(IDC_STATIC_RbtStatue, _T("取料流程"));
 			break;
 		case RbtPut:
 			dc.SelectObject(m_pBmp[1]);//加载位图
 			pDC->BitBlt(0, 0, bs.bmWidth, bs.bmHeight, &dc, 0, 0, SRCCOPY);//显示位图
-			SetDlgItemText(IDC_STATIC_RbtStatue, _T("放料中"));
+			SetDlgItemText(IDC_STATIC_RbtStatue, _T("放料流程"));
 			break;
 		default:
 			break;
