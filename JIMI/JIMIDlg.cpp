@@ -164,6 +164,7 @@ BOOL CJIMIDlg::OnInitDialog()
 	bRunStop = false;
 	bVisionCon = false;
 	iRbtStatue = RbtReady;
+	iProcessTimes = 1;
 	InitializeCriticalSection(&Sec_BaseRbtSocket);
 	InitializeCriticalSection(&Sec_MoveRbtSocket);
 	InitializeCriticalSection(&Sec_VisionSocket);
@@ -836,7 +837,7 @@ void CJIMIDlg::ShowAutouidlg()
 	tabRect.right -= 3;
 	tabRect.top += 28;
 	tabRect.bottom -= 3;
-
+	m_Maintab.SetCurSel(3);
 	Autouidlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_SHOWWINDOW);
 	RBTCTdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 	Visiondlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
@@ -914,7 +915,16 @@ void CJIMIDlg::EventInitial()
 	ResetEvent(Handle_VisionRetPOS);
 
 	Handle_UWRetData = CreateEvent(NULL, FALSE, FALSE, NULL);
+	Handle_UWRetData_reach_out = CreateEvent(NULL, FALSE, FALSE, NULL);
+	Handle_UWRetData_out = CreateEvent(NULL, FALSE, FALSE, NULL);
+	Handle_UWRetData_ack = CreateEvent(NULL, FALSE, FALSE, NULL);
+	Handle_UWRetData_reach_in = CreateEvent(NULL, FALSE, FALSE, NULL);
+
 	ResetEvent(Handle_UWRetData);
+	ResetEvent(Handle_UWRetData_reach_out);
+	ResetEvent(Handle_UWRetData_out);
+	ResetEvent(Handle_UWRetData_ack);
+	ResetEvent(Handle_UWRetData_reach_in);
 }
 
 void CJIMIDlg::OnBnClickedButtonComok2()
@@ -957,47 +967,53 @@ UINT CJIMIDlg::InitialALLThread(LPVOID pParam)
 UINT CJIMIDlg::AutoRunThread(LPVOID pParam)
 {
 	CJIMIDlg *pThisThreadDlg = (CJIMIDlg *)pParam;
-	int iProcessTimes = 1;
+	pThisThreadDlg->iProcessTimes = 1;
 	CString str;
 	while (pThisThreadDlg->bJimiAPPStart)
 	{
 		if (pThisThreadDlg->bRunAutoThread )
 		{
+			
 			if (true == pGlobal->bUWCon)//
 			{
-				if (pThisThreadDlg->UW_ON_MainRunProgram()) //主线程加工函数,带UW运行
+				//if (pThisThreadDlg->UW_ON_MainRunProgramAsFolow()) //主线程加工函数,带UW运行，此函数必须按顺序，一步一步来
+				if (pThisThreadDlg->UW_ON_MainRunProgram()) //主线程加工函数,带UW运行，此函数可按照任意顺序执行UW命令				
 				{
 					pThisThreadDlg->bRunAutoThread = false;
+					pThisThreadDlg->GetDlgItem(IDC_TAB_Mian)->EnableWindow(TRUE);
 					pThisThreadDlg->GetDlgItem(IDC_BTM_InitialALL)->EnableWindow(TRUE);
 					pThisThreadDlg->GetDlgItem(IDC_BTM_RunMain)->EnableWindow(TRUE);
-					pThisThreadDlg->GetDlgItem(IDC_BTM_CycleStop)->EnableWindow(FALSE);
+					pThisThreadDlg->GetDlgItem(IDC_BTM_CycleStop)->EnableWindow(TRUE);
 					pThisThreadDlg->GetDlgItem(IDC_BTM_Stop)->EnableWindow(FALSE);
+					
+				//	pGlobal->UWSocekt.CloseSocket();
 					Sleep(10);
-					iProcessTimes = 1;
+					pThisThreadDlg->iProcessTimes = 1;
 				}
 				else
 				{
-					iProcessTimes++;
+				//	pThisThreadDlg->iProcessTimes++;
 				}
 			}
 			else
 			{
 				Sleep(20);
-				str.Format(_T("%d"), iProcessTimes);
+				str.Format(_T("%d"), pThisThreadDlg->iProcessTimes);
 				pThisThreadDlg->AddToRunList(_T("*******************第 ") + str + _T(" 次加工流程开始***********"));
 				if (pThisThreadDlg->UW_OFF_MainRunProgram()) //主线程加工函数，不带UW运行
 				{
 					pThisThreadDlg->bRunAutoThread = false;
+					pThisThreadDlg->GetDlgItem(IDC_TAB_Mian)->EnableWindow(TRUE);
 					pThisThreadDlg->GetDlgItem(IDC_BTM_InitialALL)->EnableWindow(TRUE);
 					pThisThreadDlg->GetDlgItem(IDC_BTM_RunMain)->EnableWindow(TRUE);
 					pThisThreadDlg->GetDlgItem(IDC_BTM_CycleStop)->EnableWindow(FALSE);
 					pThisThreadDlg->GetDlgItem(IDC_BTM_Stop)->EnableWindow(FALSE);
 					Sleep(10);
-					iProcessTimes = 1;
+					pThisThreadDlg->iProcessTimes = 1;
 				}
 				else
 				{
-					iProcessTimes++;
+					pThisThreadDlg->iProcessTimes++;
 				}
 			}			
 		}
@@ -1038,37 +1054,28 @@ void CJIMIDlg::IniSystemini()
 	//pGlobal->VisMarkSocekt.iPort = _ttoi(sText);
 	return;
 }
+bool CJIMIDlg::InitialResetevent()
+{
+	ResetEvent(Handle_GetPOS);
+	ResetEvent(Handle_FinishPOS[0]);
+	ResetEvent(Handle_FinishPOS[1]);
+	ResetEvent(Handle_VisionRetPOS);
+	ResetEvent(Handle_RBTReadIO[0]);
+	ResetEvent(Handle_RBTReadIO[1]);
+	ResetEvent(Handle_RBTReadIO[2]);
+
+	ResetEvent(Handle_UWRetData);
+	ResetEvent(Handle_UWRetData_reach_out);
+	ResetEvent(Handle_UWRetData_out);
+	ResetEvent(Handle_UWRetData_ack);
+	ResetEvent(Handle_UWRetData_reach_in);
+	return true;
+}
 bool CJIMIDlg::InitialALL()
 {
 	//自动前初始化全部硬件
 	bool bret;
-	//线程中，无法建立服务器
-	/////////打开机器人基础服务器///////
-	//if (pGlobal->BaseRbtSocket.m_hSocket == INVALID_SOCKET)
-	//{
-	//	bret = pGlobal->BaseRbtSocket.Config();//创建套接字
-	//	Sleep(500);
-	//	pGlobal->BaseRbtSocket.SendMSG(_T("#,B,3,0,@"));//运动服务器开启
-	//}
-	//if (true == pGlobal->bVisionCon)
-	//{
-	//	if (pGlobal->VisMarkSocekt.m_hSocket == INVALID_SOCKET)
-	//	{
-	//		BOOL bFlag = pGlobal->VisMarkSocekt.Config();//创建套接字
-	//		Sleep(500);
-	//	}
-	//	if (TRUE != pGlobal->VisMarkSocekt.m_bConnected)
-	//	{
-	//		pGlobal->AddToErrorList(_T("视觉软件未连接,请检测视觉软件是否正常打开并连接"));
-	//		return false;
-	//	}
-	//}
-	////////////////打开运动服务器//////////////////
-	//if (pGlobal->RbtSocket.m_hSocket == INVALID_SOCKET)
-	//{
-	//	bret = pGlobal->RbtSocket.Config();//创建套接字
-	//	Sleep(500);
-	//}
+	InitialResetevent();
 	/////////初始化电爪///////////
 	if (!pGlobal->RBTCTdlg.IniIOClamp())
 	{
@@ -1078,27 +1085,34 @@ bool CJIMIDlg::InitialALL()
 
 	return true;
 }
-int CJIMIDlg::UW_ON_MainRunProgram()
+
+int CJIMIDlg::UW_ON_MainRunProgramAsFolow()
 {
 	int bret;
-	pGlobal->AddToRunList(_T("----- 等待UW的命令 -----"));
-	DWORD dwState = WaitForSingleObject(pGlobal->Handle_UWRetData,INFINITE );
+	//////////////////////////////////Step1///////////////////////////////////////////
+	pGlobal->AddToRunList(_T("----- Step1.0:等待UW_reach_out出库的命令 -----"));
+	DWORD dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_reach_out, INFINITE);
 	if (bCycleStop)
 	{
 		return 1;
 	}
-	//得到数据，然后处理json数据，然后再开启以下的步骤。//先出库再入库
-	ResetEvent(pGlobal->Handle_UWRetData);
-	pGlobal->UWdlg.UW_Read_cmdcode_DealData(pGlobal->UWSocekt.sJsonDATA);
-	if (pGlobal->UWdlg.sRecvCmdCode == _T("reach_out"))
+	if (dwState - WAIT_OBJECT_0 == 0)
 	{
+		ResetEvent(pGlobal->Handle_UWRetData_reach_out);
 		pGlobal->AddToRunList(_T("-----Step1.1:UW的出库到账信号:reach_out-----"));
 		pGlobal->UWdlg.UW_Ack_Send();
 		pGlobal->AddToRunList(_T("-----Step1.2:ROBOT回复UW ack命令-----"));
-		//ResetEvent(pGlobal->Handle_UWRetData);
 	}
-	else if (pGlobal->UWdlg.sRecvCmdCode == _T("out"))
+	//////////////////////////////////Step2///////////////////////////////////////////
+	pGlobal->AddToRunList(_T("----- Step2.0:等待UW_out出库的命令 -----"));
+	dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_out, 300000);	
+	if (bCycleStop)
 	{
+		return 1;
+	}
+	if (dwState - WAIT_OBJECT_0 == 0)
+	{
+		ResetEvent(pGlobal->Handle_UWRetData_out);
 		pGlobal->AddToRunList(_T("-----Step2.1:UW的出库到账信号:out-----"));
 		pGlobal->UWdlg.UW_Ack_Send();
 		pGlobal->AddToRunList(_T("-----Step2.2:ROBOT回复UW ack命令-----"));
@@ -1108,20 +1122,173 @@ int CJIMIDlg::UW_ON_MainRunProgram()
 		if (bret != 0)
 		{
 			pGlobal->AddToRunList(_T("-----Step2.4:ROBOT出库取放料动作机器人动作失败-----"));
-			pGlobal->UWdlg.UW_OutFinish_Send(_T("失败"));
-			pGlobal->AddToRunList(_T("-----Step2.5:ROBOT发送出库结果：失败-----"));
+			pGlobal->UWdlg.UW_OutFinish_Send(_T("fault"));
+			pGlobal->AddToErrorList(_T("-----Step2.5:ROBOT发送出库结果：失败-----"));
 			return bret;
 		}
 		else
 		{
 			pGlobal->AddToRunList(_T("-----Step2.4:ROBOT出库取放料动作完成-----"));
-			pGlobal->UWdlg.UW_OutFinish_Send(_T("成功"));
+			pGlobal->UWdlg.UW_OutFinish_Send(_T("success"));
 			pGlobal->AddToRunList(_T("-----Step2.5:ROBOT发送出库结果：成功-----"));
-			//ResetEvent(pGlobal->Handle_UWRetData);
-			//dwState = WaitForSingleObject(pGlobal->Handle_UWRetData, INFINITE);
-
-		}	
+		}
 	}
+	else if (WAIT_TIMEOUT == dwState)
+	{
+		ResetEvent(pGlobal->Handle_UWRetData_out);
+		pGlobal->AddToErrorList(_T("-----Step2.1.:等到UW_OUT信号300s超时"));
+		return 1;
+	}
+	//////////////////////////////////Step3///////////////////////////////////////////
+	pGlobal->AddToRunList(_T("----- Step3.0:等待UW_ack出库的命令 -----"));
+	dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_ack, 50000);
+	if (bCycleStop)
+	{		
+		return 1;
+	}
+	if (dwState - WAIT_OBJECT_0 == 0)
+	{
+		ResetEvent(pGlobal->Handle_UWRetData_ack);
+		pGlobal->AddToRunList(_T("-----Step3.1.:收到UW的ack出库信号-----"));
+	}
+	else if (WAIT_TIMEOUT == dwState)
+	{
+		ResetEvent(pGlobal->Handle_UWRetData_ack);
+		pGlobal->AddToErrorList(_T("-----Step3.1.:等到UW_OUT出库信号50s超时"));
+		return 1;
+	}
+	/////////////开始入库//////////////////////////
+	//////////////////////////////////Step4///////////////////////////////////////////
+	pGlobal->AddToRunList(_T("----- Step4.0:等待UW_reach_in入库的命令 -----"));
+	dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_reach_in, INFINITE);
+	if (bCycleStop)
+	{
+		return 1;
+	}
+	if (dwState - WAIT_OBJECT_0 == 0)
+	{
+		ResetEvent(pGlobal->Handle_UWRetData_reach_in);
+		pGlobal->AddToRunList(_T("-----Step4.1:UW的入库到账信号:reach_in-----"));
+		pGlobal->UWdlg.UW_Ack_Send();
+		pGlobal->AddToRunList(_T("-----Step4.2:ROBOT回复UW ack命令-----"));
+		pGlobal->AddToRunList(_T("-----Step4.3:ROBOT开始进行入库取放料-----"));
+		////////机械臂开始取放料//////////
+		bret = UW_OUT_IN_ROBOT_Process();
+		if (bret != 0)
+		{
+			pGlobal->AddToRunList(_T("-----Step4.4:ROBOT入库取放料动作机器人动作失败-----"));
+			pGlobal->UWdlg.UW_InFinish_Send();
+			pGlobal->AddToRunList(_T("-----Step4.5:ROBOT发送入库结果：失败-----"));
+			return bret;
+		}
+		else
+		{
+			pGlobal->AddToRunList(_T("-----Step3.4:ROBOT入库取放料动作完成-----"));
+			pGlobal->UWdlg.UW_InFinish_Send();
+			pGlobal->AddToRunList(_T("-----Step3.5:ROBOT发送入库结果：成功-----"));
+		}
+	}
+	//////////////////////////////////Step5///////////////////////////////////////////
+	pGlobal->AddToRunList(_T("----- Step5.0:等待UW_ack入库的命令 -----"));
+	dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_ack, 50000);
+	if (bCycleStop)
+	{
+		return 1;
+	}
+	if (dwState - WAIT_OBJECT_0 == 0)
+	{
+		ResetEvent(pGlobal->Handle_UWRetData_ack);
+		pGlobal->AddToRunList(_T("-----Step5.1.:收到UW的ack入库信号-----"));
+	}
+	else if (WAIT_TIMEOUT == dwState)
+	{
+		ResetEvent(pGlobal->Handle_UWRetData_ack);
+		pGlobal->AddToErrorList(_T("-----Step5.1.:等到UW_OUT入库信号50s超时"));
+		return 1;
+	}
+
+	return 0;
+}
+int CJIMIDlg::UW_ON_MainRunProgram()
+{
+	if (false == pGlobal->UWSocekt.m_bConnected)
+	{
+		pGlobal->AddToErrorList(_T("UW_Socket连接失败!!退出循环"));
+		return 1;
+	}
+	int bret;
+	pGlobal->AddToRunList(_T("----- 等待UW的命令 -----"));
+	DWORD dwState = WaitForSingleObject(pGlobal->Handle_UWRetData,INFINITE );
+	if (bCycleStop)
+	{
+		return 1;
+	}
+	//得到数据，然后处理json数据，然后再开启以下的步骤。//先出库再入库
+	ResetEvent(pGlobal->Handle_UWRetData);
+	//pGlobal->UWdlg.UW_Read_cmdcode_DealData(pGlobal->UWSocekt.sJsonDATA);
+	if (pGlobal->UWdlg.sRecvCmdCode == _T("reach_out"))
+	{
+		pGlobal->AddToRunList(_T("-----Step1.1:UW的出库到账信号:reach_out-----"));
+		pGlobal->UWdlg.UW_Ack_Send();
+		pGlobal->AddToRunList(_T("-----Step1.2:ROBOT回复UW ack命令-----"));	
+		//////////////////////////////////Step2///////////////////////////////////////////
+		pGlobal->AddToRunList(_T("----- Step2.0:等待UW_out出库的命令 -----"));
+		dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_out, 300000);
+		if (bCycleStop)
+		{
+			return 1;
+		}
+		if (dwState - WAIT_OBJECT_0 == 0)
+		{
+			ResetEvent(pGlobal->Handle_UWRetData_out);
+			pGlobal->AddToRunList(_T("-----Step2.1:UW的出库到账信号:out-----"));
+			pGlobal->UWdlg.UW_Ack_Send();
+			pGlobal->AddToRunList(_T("-----Step2.2:ROBOT回复UW ack命令-----"));
+			pGlobal->AddToRunList(_T("-----Step2.3:ROBOT开始进行出库取放料-----"));
+			////////机械臂开始取放料//////////
+			bret = UW_OUT_IN_ROBOT_Process();
+			if (bret != 0)
+			{
+				pGlobal->AddToRunList(_T("-----Step2.4:ROBOT出库取放料动作机器人动作失败-----"));
+				pGlobal->UWdlg.UW_OutFinish_Send(_T("fault"));
+				pGlobal->AddToErrorList(_T("-----Step2.5:ROBOT发送出库结果：失败-----"));
+				return bret;
+			}
+			else
+			{
+				pGlobal->AddToRunList(_T("-----Step2.4:ROBOT出库取放料动作完成-----"));
+				pGlobal->UWdlg.UW_OutFinish_Send(_T("success"));
+				pGlobal->AddToRunList(_T("-----Step2.5:ROBOT发送出库结果：成功-----"));
+			}
+		}
+		else if (WAIT_TIMEOUT == dwState)
+		{
+			ResetEvent(pGlobal->Handle_UWRetData_out);
+			pGlobal->AddToErrorList(_T("-----Step2.1.:等到UW_OUT信号300s超时"));
+			return 1;
+		}
+		//////////////////////////////////Step3///////////////////////////////////////////
+		pGlobal->AddToRunList(_T("----- Step3.0:等待UW_ack出库的命令 -----"));
+		dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_ack, 50000);
+		if (bCycleStop)
+		{
+			return 1;
+		}
+		if (dwState - WAIT_OBJECT_0 == 0)
+		{
+			ResetEvent(pGlobal->Handle_UWRetData_ack);
+			pGlobal->AddToRunList(_T("-----Step3.1.:收到UW的ack出库信号-----"));
+		}
+		else if (WAIT_TIMEOUT == dwState)
+		{
+			ResetEvent(pGlobal->Handle_UWRetData_ack);
+			pGlobal->AddToErrorList(_T("-----Step3.1.:等到UW_OUT出库信号50s超时"));
+			return 1;
+		}
+		iProcessTimes++;
+	}
+	/////////////////////////////////////入库与出库分开//////////////////////////////
+	/////////////////////////////////////入库//////////////////////////////
 	else if (pGlobal->UWdlg.sRecvCmdCode == _T("reach_in"))
 	{
 		pGlobal->AddToRunList(_T("-----Step3.1:UW的入库到账信号:reach_in-----"));
@@ -1129,6 +1296,7 @@ int CJIMIDlg::UW_ON_MainRunProgram()
 		pGlobal->AddToRunList(_T("-----Step3.2:ROBOT回复UW ack命令-----"));
 		pGlobal->AddToRunList(_T("-----Step3.3:ROBOT开始进行入库取放料-----"));
 		////////机械臂开始取放料//////////
+		pGlobal->UWdlg.sRecvCmdCode = _T("reach_in");
 		bret = UW_OUT_IN_ROBOT_Process();
 		if (bret != 0)
 		{
@@ -1145,9 +1313,29 @@ int CJIMIDlg::UW_ON_MainRunProgram()
 			//ResetEvent(pGlobal->Handle_UWRetData);
 			//dwState = WaitForSingleObject(pGlobal->Handle_UWRetData, INFINITE);
 		}
+		//////////////////////////////////Step5///////////////////////////////////////////
+		pGlobal->AddToRunList(_T("----- Step5.0:等待UW_ack入库的命令 -----"));
+		dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_ack, 50000);
+		if (bCycleStop)
+		{
+			return 1;
+		}
+		if (dwState - WAIT_OBJECT_0 == 0)
+		{
+			ResetEvent(pGlobal->Handle_UWRetData_ack);
+			pGlobal->AddToRunList(_T("-----Step5.1.:收到UW的ack入库信号-----"));
+		}
+		else if (WAIT_TIMEOUT == dwState)
+		{
+			ResetEvent(pGlobal->Handle_UWRetData_ack);
+			pGlobal->AddToErrorList(_T("-----Step5.1.:等到UW_OUT入库信号50s超时"));
+			return 1;
+		}
+		iProcessTimes++;
 	}
 	else if (pGlobal->UWdlg.sRecvCmdCode == _T("ack"))
 	{
+		ResetEvent(pGlobal->Handle_UWRetData_ack);
 		pGlobal->AddToRunList(_T("-----Step..:收到UW的ack信号-----"));
 	}
 	return 0;
@@ -1389,14 +1577,14 @@ void CJIMIDlg::OnBnClickedBtmRunmain()
 	{
 		if (true == pGlobal->UWSocekt.m_bConnected)
 		{
-			
 		}
 		else
 		{
 			pGlobal->UWSocekt.Config();
 			pGlobal->UWdlg.GetDlgItem(IDC_BTN_Connect)->SetWindowText(_T("断开"));
+			//pGlobal->UWdlg.UW_Login_Send(_T("ur"));
 			Sleep(10);
-			pGlobal->UWdlg.UW_Login_Send(_T("UR"));
+			
 		}
 	}
 	ShowAutouidlg();
@@ -1417,8 +1605,20 @@ void CJIMIDlg::OnBnClickedBtmCyclestop()
 	bRunAutoThread = false;
 	bCycleStop = true;
 	bRunStop = false;
+	if (true == bUWCon)
+	{
+		if (true == pGlobal->UWSocekt.m_bConnected)
+		{
+			pGlobal->UWSocekt.CloseSocket();
+		}
+	}
+	
 	SetEvent(Handle_FinishPOS[1]);//机器人手动停止
 	SetEvent(Handle_UWRetData);//停止UW的持续等待动作
+	SetEvent(Handle_UWRetData_reach_out);//停止UW的持续等待动作
+	SetEvent(Handle_UWRetData_out);//停止UW的持续等待动作
+	SetEvent(Handle_UWRetData_ack);//停止UW的持续等待动作
+	SetEvent(Handle_UWRetData_reach_in);//停止UW的持续等待动作
 	GetDlgItem(IDC_TAB_Mian)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTM_InitialALL)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTM_RunMain)->EnableWindow(TRUE);
@@ -1434,8 +1634,19 @@ void CJIMIDlg::OnBnClickedBtmStop()
 	bRunAutoThread = false;
 	bCycleStop = true;
 	bRunStop = true;
+	if (true == bUWCon)
+	{
+		if (true == pGlobal->UWSocekt.m_bConnected)
+		{
+			pGlobal->UWSocekt.CloseSocket();
+		}
+	}
 	SetEvent(Handle_FinishPOS[1]);//机器人手动停止
 	SetEvent(Handle_UWRetData);//停止UW的持续等待动作
+	SetEvent(Handle_UWRetData_reach_out);//停止UW的持续等待动作
+	SetEvent(Handle_UWRetData_out);//停止UW的持续等待动作
+	SetEvent(Handle_UWRetData_ack);//停止UW的持续等待动作
+	SetEvent(Handle_UWRetData_reach_in);//停止UW的持续等待动作
 	GetDlgItem(IDC_TAB_Mian)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTM_InitialALL)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTM_RunMain)->EnableWindow(TRUE);
@@ -1461,6 +1672,20 @@ void CJIMIDlg::OnBnClickedBtmInitialall()
 		//	Sleep(10);
 		}
 	}
+	//if (true == bUWCon)
+	//{
+	//	if (true == pGlobal->UWSocekt.m_bConnected)
+	//	{
+
+	//	}
+	//	else
+	//	{
+	//		pGlobal->UWSocekt.Config();
+	//		pGlobal->UWdlg.GetDlgItem(IDC_BTN_Connect)->SetWindowText(_T("断开"));
+	//		Sleep(10);
+	//		//pGlobal->UWdlg.UW_Login_Send(_T("ur"));
+	//	}
+	//}
 	bInitialALL = true;
 	GetDlgItem(IDC_BTM_InitialALL)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTM_RunMain)->EnableWindow(FALSE);

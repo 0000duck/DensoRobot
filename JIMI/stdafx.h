@@ -65,7 +65,8 @@ char * CstringToChar(CString str);//cstring 转换成char *
 string toString(CString cs);
 CString toCString(string str);
 void CStringSplit(CString &strSource, CString *strDes, CString strSplitChar);//split函数的应用
-
+CString ConvertUTF8ToCString(std::string utf8str);//string类型的utf-8字符串转为CString类型的unicode字符串
+string _UnicodeToUtf8(CString Unicodestr);//CString类型的unicode字符串转为string类型的utf-8字符串
 #define Sigle_MOLDE 0
 #define X_Y_MOLDE 1
 

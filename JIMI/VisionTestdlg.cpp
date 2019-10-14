@@ -274,7 +274,6 @@ void VisionTestdlg::OnBnClickedBtnConvisonsocket()
 		GetDlgItem(IDC_BTN_GETCURPOS)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_SendPosToCam)->EnableWindow(TRUE);
 		GetDlgItem(IDC_BTN_MoveToRetPOS)->EnableWindow(TRUE);
-
 	}
 	else
 	{

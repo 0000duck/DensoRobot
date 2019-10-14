@@ -81,14 +81,17 @@ public:
 	bool bJimiAPPStart;
 	bool bInitialALL;
 	bool bRunAutoThread;
+	int iProcessTimes;
 	bool bCycleStop;
 	bool bRunStop;
 	static UINT InitialALLThread(LPVOID pParam);
 	static UINT AutoRunThread(LPVOID pParam);
 	static UINT CheckRbtMoveSocketAliveThread(LPVOID pParam);
 	int UW_OFF_MainRunProgram();//return 1234567分别对应相应点位，则显示到位异常,不带UW跑的
-	int UW_ON_MainRunProgram();//return 1234567分别对应相应点位，则显示到位异常,不带UW跑的
+	int UW_ON_MainRunProgram();//return 1234567分别对应相应点位，则显示到位异常,带UW跑的
+	int UW_ON_MainRunProgramAsFolow();//return 1234567分别对应相应点位，必须先出库再入库
 	bool InitialALL();//return 1234567分别对应相应点位，则显示到位异常
+	bool InitialResetevent();
 	int iRbtStatue;//机器人状态，0123456
 
 	int UW_OUT_IN_ROBOT_Process();//UW出库机械臂取料流程
@@ -161,6 +164,10 @@ public:
 	HANDLE Handle_RBTReadIO[3];//1为正常ON ，0为OFF，3为读取全部IO
 	HANDLE Handle_VisionRetPOS;
 	HANDLE Handle_UWRetData;
+	HANDLE Handle_UWRetData_reach_out;
+	HANDLE Handle_UWRetData_out;
+	HANDLE Handle_UWRetData_ack;
+	HANDLE Handle_UWRetData_reach_in;
 
 	afx_msg void OnBnClickedButtonComok2();
 	virtual BOOL DestroyWindow();

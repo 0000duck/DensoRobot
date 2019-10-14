@@ -40,7 +40,7 @@ BOOL AutoUIdlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
-//	SetTimer(1,500,NULL);
+	SetTimer(1,500,NULL);
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // 异常: OCX 属性页应返回 FALSE
 }
@@ -49,52 +49,55 @@ BOOL AutoUIdlg::OnInitDialog()
 void AutoUIdlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
-	CDC *pDC = GetDlgItem(IDC_STATIC_RBTPIC)->GetDC();
-	CDC dc;
-	dc.CreateCompatibleDC(pDC);//创建兼容DC
-	BITMAP bs;//BITMAP结构变量
-	CBitmap *m_pBmp[6];//位图指针数组
-	
-	m_pBmp[0] = new CBitmap;
-	m_pBmp[0]->LoadBitmap(IDB_BITMAP_RBT_L);
-	m_pBmp[1] = new CBitmap;
-	m_pBmp[1]->LoadBitmap(IDB_BITMAP_RBT_R);
+	//CDC *pDC = GetDlgItem(IDC_STATIC_RBTPIC)->GetDC();
+	//CDC dc;
+	//dc.CreateCompatibleDC(pDC);//创建兼容DC
+	//BITMAP bs;//BITMAP结构变量
+	//CBitmap *m_pBmp[6];//位图指针数组
+	//
+	//m_pBmp[0] = new CBitmap;
+	//m_pBmp[0]->LoadBitmap(IDB_BITMAP_RBT_L);
+	//m_pBmp[1] = new CBitmap;
+	//m_pBmp[1]->LoadBitmap(IDB_BITMAP_RBT_R);
 
-	m_pBmp[0]->GetBitmap(&bs);
-
+	//m_pBmp[0]->GetBitmap(&bs);
+	CString str;
 	if (nIDEvent == 1)
 	{
-
+		str.Format(_T("%d"), pGlobal->iProcessTimes);
+		SetDlgItemText(IDC_EDIT_LoopTimes, str);
 		switch (pGlobal->iRbtStatue)
 		{
 		case RbtReady:
-			dc.SelectObject(m_pBmp[0]);//加载位图
-	        pDC->BitBlt(0, 0, bs.bmWidth, bs.bmHeight, &dc, 0, 0, SRCCOPY);//显示位图
+			//dc.SelectObject(m_pBmp[0]);//加载位图
+	       // pDC->BitBlt(0, 0, bs.bmWidth, bs.bmHeight, &dc, 0, 0, SRCCOPY);//显示位图
 			SetDlgItemText(IDC_STATIC_RbtStatue,_T("准备好"));
 			break;
 		case RbtMarkGet:
-			dc.SelectObject(m_pBmp[0]);//加载位图
-			pDC->BitBlt(0, 0, bs.bmWidth, bs.bmHeight, &dc, 0, 0, SRCCOPY);//显示位图
+			//dc.SelectObject(m_pBmp[0]);//加载位图
+			//pDC->BitBlt(0, 0, bs.bmWidth, bs.bmHeight, &dc, 0, 0, SRCCOPY);//显示位图
 			SetDlgItemText(IDC_STATIC_RbtStatue, _T("取料定位中"));
 			break;
 		case RbtMarkPut:
-			dc.SelectObject(m_pBmp[1]);//加载位图
-			pDC->BitBlt(0, 0, bs.bmWidth, bs.bmHeight, &dc, 0, 0, SRCCOPY);//显示位图
+			//dc.SelectObject(m_pBmp[1]);//加载位图
+			//pDC->BitBlt(0, 0, bs.bmWidth, bs.bmHeight, &dc, 0, 0, SRCCOPY);//显示位图
 			SetDlgItemText(IDC_STATIC_RbtStatue, _T("放料定位中"));
 			break;
 		case RbtGet:
-			dc.SelectObject(m_pBmp[0]);//加载位图
-			pDC->BitBlt(0, 0, bs.bmWidth, bs.bmHeight, &dc, 0, 0, SRCCOPY);//显示位图
+			//dc.SelectObject(m_pBmp[0]);//加载位图
+			//pDC->BitBlt(0, 0, bs.bmWidth, bs.bmHeight, &dc, 0, 0, SRCCOPY);//显示位图
 			SetDlgItemText(IDC_STATIC_RbtStatue, _T("取料流程"));
 			break;
 		case RbtPut:
-			dc.SelectObject(m_pBmp[1]);//加载位图
-			pDC->BitBlt(0, 0, bs.bmWidth, bs.bmHeight, &dc, 0, 0, SRCCOPY);//显示位图
+			//dc.SelectObject(m_pBmp[1]);//加载位图
+			//pDC->BitBlt(0, 0, bs.bmWidth, bs.bmHeight, &dc, 0, 0, SRCCOPY);//显示位图
 			SetDlgItemText(IDC_STATIC_RbtStatue, _T("放料流程"));
 			break;
 		default:
 			break;
 		}
+		//pDC->DeleteDC();
+		//dc.DeleteDC();
 	}
 	CDialogEx::OnTimer(nIDEvent);
 }

@@ -97,3 +97,50 @@ CString toCString(string str)
 	return ans;
 #endif // _UNICODE  
 }
+
+
+//string类型的utf-8字符串转为CString类型的unicode字符串
+CString ConvertUTF8ToCString(std::string utf8str)
+{
+	/* 预转换，得到所需空间的大小 */
+	int nLen = ::MultiByteToWideChar(CP_UTF8, NULL,
+		utf8str.data(), utf8str.size(), NULL, 0);
+	/* 转换为Unicode */
+	std::wstring wbuffer;
+	wbuffer.resize(nLen);
+	::MultiByteToWideChar(CP_UTF8, NULL, utf8str.data(), utf8str.size(),
+		(LPWSTR)(wbuffer.data()), wbuffer.length());
+
+#ifdef UNICODE
+	return(CString(wbuffer.data(), wbuffer.length()));
+#else
+	/*
+	* 转换为ANSI
+	* 得到转换后长度
+	*/
+	nLen = WideCharToMultiByte(CP_ACP, 0,
+		wbuffer.data(), wbuffer.length(), NULL, 0, NULL, NULL);
+
+	std::string ansistr;
+	ansistr.resize(nLen);
+
+	/* 把unicode转成ansi */
+	WideCharToMultiByte(CP_ACP, 0, (LPWSTR)(wbuffer.data()), wbuffer.length(),
+		(LPSTR)(ansistr.data()), ansistr.size(), NULL, NULL);
+	return(CString(ansistr.data(), ansistr.length()));
+#endif
+}
+
+//CString类型的unicode字符串转为string类型的utf-8字符串
+string _UnicodeToUtf8(CString Unicodestr)
+{
+	wchar_t* unicode = Unicodestr.AllocSysString();
+	int len;
+	len = WideCharToMultiByte(CP_UTF8, 0, unicode, -1, NULL, 0, NULL, NULL);
+	char *szUtf8 = (char*)malloc(len + 1);
+	memset(szUtf8, 0, len + 1);
+	WideCharToMultiByte(CP_UTF8, 0, unicode, -1, szUtf8, len, NULL, NULL);
+	string result = szUtf8;
+	free(szUtf8);
+	return result;
+}
