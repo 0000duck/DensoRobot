@@ -146,6 +146,7 @@ void ClientSocket_Robot::DataProcess()
 		pGlobal->RBTCTdlg.CurSpeed = sRecvData.Mid(strpos + 1, Recvlen - strpos);
 		pGlobal->RBTCTdlg.SetDlgItemText(IDC_EDIT_SPEEDVIEW, pGlobal->RBTCTdlg.CurSpeed);
 		pGlobal->RBTCTdlg.m_SlidSpeed.SetPos(_tstoi(pGlobal->RBTCTdlg.CurSpeed));//设置滑条位置		
+		pGlobal->Autouidlg.SetDlgItemText(IDC_EDIT_rbtSpeed, pGlobal->RBTCTdlg.CurSpeed);
 	}
 	else if (_T("RETP") == sText)
 	{ //位置返回处理

@@ -223,7 +223,7 @@ void RobotControldlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 			iPos = m_SlidSpeed.GetPos();
 			sPos.Format(_T("%d"), iPos);
 			SetDlgItemText(IDC_EDIT_SPEEDVIEW, sPos);
-
+			pGlobal->Autouidlg.SetDlgItemText(IDC_EDIT_rbtSpeed, pGlobal->RBTCTdlg.CurSpeed);
 			strMSG = _T("#,V,2,") + sPos + _T(",@");
             bool ret = pGlobal->RbtSocket.SendMSG(strMSG);
 		}
@@ -1127,21 +1127,24 @@ bool RobotControldlg::OpenClamp()
 {
 	CString sMSG;
 	int ret;
-	RBTIOReset(25);//夹爪夹紧
-	Sleep(50);
-	RBTIOReset(28);//扫描IN0-IN5
-	Sleep(50);
+//	RBTIOReset(29);//关闭运动
+//	Sleep(50);
+	RBTIOReset(31);//夹爪夹紧清零
+	Sleep(100);
 
-	RBTIOSet(24); // 夹爪松开
-	Sleep(50);
-	RBTIOSet(28);//扫描IN0-IN5
-	Sleep(500);
-	//ret = RBTIORead(11);//动作完成信号
-	for (int i = 0; i < 6; i++)
+	RBTIOSet(30); // 夹爪松开
+	Sleep(100);
+//	RBTIOSet(29); // 夹爪松开
+//	Sleep(100);
+	for (int i = 0; i < 8; i++)
 	{
-		if (iCurSingleIO[11] == 1 )
+		
+		if (iCurSingleIO[14] == 1 )
+	//	if (RBTIORead(14) == 1)
 		{
 			pGlobal->AddToRunList(_T("夹爪打开成功"));
+			RBTIOReset(30); // 夹爪松开清零
+			Sleep(100);
 			return true;
 		}
 		else
@@ -1149,36 +1152,37 @@ bool RobotControldlg::OpenClamp()
 			Sleep(500);
 		}
 	}
-	//pGlobal->AddToErrorList(_T("夹爪打开5s超时"));
-	return true;
+	pGlobal->AddToErrorList(_T("夹爪打开4s超时"));
+	return false;
 }
 
 bool RobotControldlg::CloseClamp()
 {
 	CString sMSG;
 	bool ret;
-	if (iCurSingleIO[25] == 1)
-	{
-		pGlobal->AddToRunList(_T("夹爪已处于夹紧状态"));
-		return true;
-	}
-	RBTIOReset(24);//夹爪松开置0
-	Sleep(100);
-	RBTIOReset(28);//扫描IN0-IN5
+	//if (iCurSingleIO[29] == 1)
+	//{
+	//	pGlobal->AddToRunList(_T("夹爪已处于夹紧状态"));
+	//	return true;
+	//}
+//	RBTIOReset(29);//夹爪运动置0
+//	Sleep(100);
+	RBTIOReset(30);//夹爪松开置0
 	Sleep(100);
 
-	RBTIOSet(25);//夹爪夹紧
+	RBTIOSet(31);//夹爪夹紧
 	Sleep(100);
-	RBTIOSet(28);//扫描IN0-IN5
-
-	Sleep(1100);
+//	RBTIOSet(29);//夹爪夹紧
+//	Sleep(100);
 //	Sleep(2000);
-//	ret = RBTIORead(11);//动作完成信号
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < 8; i++)
 	{
-		if (iCurSingleIO[11] == 1 && iCurSingleIO[8] == 0)
+		if (iCurSingleIO[15] == 1)//检测夹紧到位信号
+		//if (RBTIORead(15) == 1)
 		{
 			pGlobal->AddToRunList(_T("夹爪夹紧成功"));
+			RBTIOReset(31); // 夹爪松开清零
+			Sleep(100);
 			return true;
 		}
 		else
@@ -1186,45 +1190,42 @@ bool RobotControldlg::CloseClamp()
 			Sleep(500);
 		}
 	}
-	//pGlobal->AddToErrorList(_T("夹爪夹紧3S超时，请确认夹爪内是否有料"));
-	return true;
+	pGlobal->AddToErrorList(_T("夹爪夹紧4S超时，请确认夹爪内是否有料"));
+	return false;
 }
 
 bool RobotControldlg::IniIOClamp()
 {
 	CString sMSG;
 	int ret;
-	RBTIOSet(29);//报警复位
+	//RBTIOSet(25);//停止
+	//Sleep(50);
+	RBTIOSet(28);//报警复位
 	Sleep(100);
-	RBTIOReset(29);//报警复位信号清除
+	RBTIOSet(27);//电爪伺服ON
 	Sleep(100);
-	RBTIOSet(30);//电爪伺服ON
+	RBTIOReset(25);//停止信号清除
 	Sleep(100);
-	//ret = RBTIORead(12);//伺服完成
-	for (int i = 0; i < 10; i++)
-	{
-		if (iCurSingleIO[12] == 1 )
-		{
-			pGlobal->AddToRunList(_T("伺服启动完成"));
-			break;
-		}
-		else
-		{
-			if (i == 9)
-			{
-				pGlobal->AddToErrorList(_T("伺服启动5s超时"));
-				return false;
-			}
-			Sleep(500);
-		}
-	}	
-	RBTIOSet(26);//电爪复位
+	RBTIOReset(28);//报警复位信号清除
+	Sleep(100);
+//	RBTIOReset(29);//运动信号清除
+//	Sleep(50);
+	RBTIOReset(30);//松开信号清除
+	Sleep(100);
+	RBTIOReset(31);//夹紧信号清除
+	Sleep(100);
+	RBTIOReset(25);//停止
+	Sleep(100);
+	RBTIOSet(24);//回原点/复位
 	Sleep(100);
 	for (int i = 0; i < 10; i++)
 	{
 		if (iCurSingleIO[10] == 1)
 		{
-			pGlobal->AddToRunList(_T("电爪复位完成"));
+			pGlobal->AddToRunList(_T("电爪初始化复位完成"));
+			RBTIOReset(24);//回原点信号清除
+			Sleep(100);
+			OpenClamp();
 			break;
 		}
 		else
@@ -1237,7 +1238,7 @@ bool RobotControldlg::IniIOClamp()
 			Sleep(500);
 		}
 	}
-	RBTIOReset(26);//电爪复位
+	//OpenClamp();
 	return true;
 }
 void RobotControldlg::OnBnClickedBtnUpdataiobtnstatue()

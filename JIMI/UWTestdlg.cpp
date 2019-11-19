@@ -211,29 +211,36 @@ int UWTestdlg::UW_OutFinish_Send(CString message)
 }
 int UWTestdlg::UW_InFinish_Send()
 {
+	ifstream is("UWtest.json", ios::binary);
+
 	CString sJsonText;
 	Json::Value root;
+	Json::Reader reader;
 
-	// 组装json内容
-	root["cmdcode"] = "in";
-	root["cmdid"] = iCmdid;
-	root["supplier"] = "ZHIRUIDE";
-	root["taskId"] = itaskId;
-
-	for (int i = 0; i < UW_ListPosNum; i++)
+	// 解析json内容
+	if (reader.parse(is, root))
 	{
-		root["list"][i]["materialNo"] = toString(UW_OutPos.materialNo[i]);
-		root["list"][i]["quantity"] = UW_OutPos.quantity[i];
-		root["list"][i]["row"] = UW_OutPos.row[i];
-		root["list"][i]["col"] = UW_OutPos.col[i];
-		root["list"][i]["productionTime"] = toString(UW_OutPos.productionTime[i]);
-		root["list"][i]["materialTypeId"] = UW_OutPos.materialTypeId[i];
+		// 组装json内容
+		root["cmdcode"] = "in";
+		root["cmdid"] = iCmdid;
+		//root["supplier"] = "ZHIRUIDE";
+		root["taskId"] = itaskId;
+
+		//for (int i = 0; i < UW_ListPosNum; i++)
+		//{
+		//	root["list"][i]["materialNo"] = toString(UW_OutPos.materialNo[i]);
+		//	root["list"][i]["quantity"] = UW_OutPos.quantity[i];
+		//	root["list"][i]["row"] = UW_OutPos.row[i];
+		//	root["list"][i]["col"] = UW_OutPos.col[i];
+		//	root["list"][i]["productionTime"] = toString(UW_OutPos.productionTime[i]);
+		//	root["list"][i]["materialTypeId"] = UW_OutPos.materialTypeId[i];
+		//}
+		std::string DevStr = root.toStyledString();
+		sJsonText = toCString(DevStr);
+		pGlobal->UWSocekt.UW_Send(sJsonText);
+		pGlobal->AddToRunList(_T("给UW发送:") + sJsonText);
+		return 0;
 	}
-	std::string DevStr = root.toStyledString();
-	sJsonText = toCString(DevStr);
-	pGlobal->UWSocekt.UW_Send(sJsonText);
-	pGlobal->AddToRunList(_T("给UW发送:") + sJsonText);
-	return 0;
 }
 
 int UWTestdlg::UW_Login_Send(CString name)
@@ -340,8 +347,16 @@ int UWTestdlg::UW_Read_out_DealData(CString str)
 	Json::Reader reader;// 解析json用Json::Reader   
 	Json::Value root; // 
 	std::string sJsonRet = toString(str);
+
 	if (reader.parse(sJsonRet, root))
 	{
+
+		Json::StyledWriter writer;
+		ofstream os;
+		os.open("UWtest.json");
+		os << writer.write(root);
+		os.close();
+
 		std::string code;
 		if (root["list"].isNull())  // 访问节点，Access an object value by name, create a null member if it does not exist.  
 		{

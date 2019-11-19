@@ -189,7 +189,38 @@ int VisionTestdlg::VisionReturnPos()
 	}
 	return 1;
 }
-
+int VisionTestdlg::bSuccessGet()
+{
+	return 1;//确定是否开启这个功能，就目前暂时屏蔽
+	Sleep(1000);
+	CString sret[5];
+	CString sMSG = _T("#,G,0,0,@");
+	ResetEvent(pGlobal->Handle_VisionRetPOS);
+	pGlobal->VisionSend(sMSG);
+	DWORD dwState = WaitForSingleObject(pGlobal->Handle_VisionRetPOS, 8000);
+	if (dwState - WAIT_OBJECT_0 == 0)
+	{
+		ResetEvent(pGlobal->Handle_VisionRetPOS);
+		CStringSplit(sVisRetPos, sret, _T(","));//#,G,1,0,@
+		if (_T("1") == sret[2])
+		{
+			pGlobal->AddToErrorList(_T("VISION返回夹料成功"));
+			return 1;
+		}
+		else 
+		{
+			pGlobal->AddToErrorList(_T("VISION返回夹料错误"));
+			return 0;
+		}
+	}
+	else if (WAIT_TIMEOUT == dwState)
+	{
+		ResetEvent(pGlobal->Handle_VisionRetPOS);
+		pGlobal->AddToRunList(_T("获取Vision判断是否夹料成功返回超时！"));
+		return 0;
+	}
+	return 0;
+}
 int VisionTestdlg::SendAndGetVisRetPos(CString sendpos[7])
 {
 	CString sret[12];

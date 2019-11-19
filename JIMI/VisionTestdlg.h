@@ -36,6 +36,7 @@ public:
 	int VisionReturnPos();
 	int GoVisionReturnPos();
 	int SendAndGetVisRetPos(CString sendpos[7]);
+	int bSuccessGet();//视觉判断是否取料成功，1成功，0异常
 	CString sVisRetPos;
 	CString sRecvPos[7];
 	CString sRomateAngle;

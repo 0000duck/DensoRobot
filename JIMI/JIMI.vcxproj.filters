@@ -217,5 +217,8 @@
     <Image Include="res\liaohe.bmp">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="..\..\..\..\..\Jimi public\logo1.png">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>

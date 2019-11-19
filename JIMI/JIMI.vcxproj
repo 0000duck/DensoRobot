@@ -255,6 +255,7 @@
     <None Include="res\JIMI.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\..\..\..\..\Jimi public\logo1.png" />
     <Image Include="..\..\..\..\Jimi public\logo1.png" />
     <Image Include="res\bitmap1.bmp" />
     <Image Include="res\bitmap2.bmp" />
