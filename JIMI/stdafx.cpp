@@ -144,3 +144,27 @@ string _UnicodeToUtf8(CString Unicodestr)
 	free(szUtf8);
 	return result;
 }
+
+//判断扫入的数据是否为数字
+BOOL IsNumber(const CString& strTest)
+{
+	CString str = strTest;
+	// 根据需要，决定是否要去掉字串两端空格、TAB或换行符
+	str.TrimLeft();
+	str.TrimRight();
+
+	if (str.IsEmpty())
+		return FALSE;
+
+	str.TrimLeft(L"0123456789.-");
+	str.TrimRight(L"0123456789.-");
+	// 如果去掉数字，字串为空，说明字串中全部是数字
+	// 如果不允许第一个字符为0，前面再加一个判断if(str.GetAt(0) != '0') return FALSE;
+	//if ((str.GetAt(0) < '0'||str.GetAt(0)>'9')&& str!="") 
+	//return FALSE;
+	if (str.IsEmpty())
+		return TRUE;
+
+	return FALSE;
+}
+

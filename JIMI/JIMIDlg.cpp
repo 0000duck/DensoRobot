@@ -102,6 +102,10 @@ BEGIN_MESSAGE_MAP(CJIMIDlg, CDialogEx)
 	ON_MESSAGE(WM_BaseRbtSend, &CJIMIDlg::OnBaseRbtSend)
 	ON_MESSAGE(WM_MoveRbtSend, &CJIMIDlg::OnMoveRbtSend)
 	ON_MESSAGE(WM_VisionSend, &CJIMIDlg::OnVisionSend)
+	ON_MESSAGE(WM_VisUpdataBTN, &CJIMIDlg::OnVisUpdataStatue)
+	ON_MESSAGE(WM_UWUpdataBTN, &CJIMIDlg::OnUWUpdataStatue)
+	ON_MESSAGE(WM_VisNumLog, &CJIMIDlg::OnVisLogStatue)
+	ON_MESSAGE(WM_UWNumLog, &CJIMIDlg::OnUWLogStatue)
 
 	ON_BN_CLICKED(IDC_BTN_ClearError, &CJIMIDlg::OnBnClickedBtnClearerror)
 
@@ -168,7 +172,7 @@ BOOL CJIMIDlg::OnInitDialog()
 	InitializeCriticalSection(&Sec_BaseRbtSocket);
 	InitializeCriticalSection(&Sec_MoveRbtSocket);
 	InitializeCriticalSection(&Sec_VisionSocket);
-
+	bmark = true;
 	for (int i = 0; i < 10; i++)
 	{
 		pJimiThread[i] = NULL;
@@ -190,11 +194,18 @@ BOOL CJIMIDlg::OnInitDialog()
 	GetDlgItem(IDC_BTM_RunMain)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTM_CycleStop)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTM_Stop)->EnableWindow(FALSE);
-
-	pJimiThread[0] = AfxBeginThread(AutoRunThread, this);
+	pJimiThread[0] = AfxBeginThread(AutoRunThread, this);	
 	pJimiThread[1] = AfxBeginThread(InitialALLThread, this);
+	pJimiThread[0]->m_bAutoDelete = TRUE;
+	pJimiThread[1]->m_bAutoDelete = TRUE;
+	for (int i = 0; i < 40; i++)
+	{
+		iUWetResult[i] = 0;
+	}
 	SetTimer(1, 500, NULL);
 	//AddToRunList(_T("初始化完成！！"));
+	pGlobal->UWdlg.bNeedReady = 1;
+
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -620,6 +631,11 @@ void CJIMIDlg::VisionSend(CString str)
 
 	::PostMessage(this->m_hWnd, WM_VisionSend, (WPARAM)buffer, NULL);
 }
+
+void CJIMIDlg::VisBtnUpdata()
+{
+	::PostMessage(this->m_hWnd, WM_VisUpdataBTN, NULL, NULL);
+}
 afx_msg LRESULT CJIMIDlg::OnVoice(WPARAM wParam, LPARAM lParam)
 {
 	char * pBuf = (char *)wParam;
@@ -733,6 +749,98 @@ afx_msg LRESULT CJIMIDlg::OnRunlog(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+afx_msg LRESULT CJIMIDlg::OnVisUpdataStatue(WPARAM wParam, LPARAM lParam)
+{
+	char * pBuf = (char *)wParam;
+	CString sMsg = CString(pBuf);
+	pGlobal->Autouidlg.UpdataVisBTNstatue();
+	return 0;
+}
+afx_msg LRESULT CJIMIDlg::OnUWUpdataStatue(WPARAM wParam, LPARAM lParam)
+{
+	pGlobal->Autouidlg.UpdataUWBTNstatue();
+	return 0;
+}
+afx_msg LRESULT CJIMIDlg::OnVisLogStatue(WPARAM wParam, LPARAM lParam)
+{
+	CString str;
+	int itotlenum,itruenum,ifalsenum,inullnum;
+	int num;
+	GetPrivateProfileString(_T("VisNumLog"), _T("totlenum"), _T("0"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
+	itotlenum = _ttoi(str);
+	GetPrivateProfileString(_T("VisNumLog"), _T("truenum"), _T("0"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
+	itruenum = _ttoi(str);
+	GetPrivateProfileString(_T("VisNumLog"), _T("falsenum"), _T("0"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
+	ifalsenum = _ttoi(str);
+	GetPrivateProfileString(_T("VisNumLog"), _T("nullnum"), _T("0"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
+	inullnum = _ttoi(str);
+
+	itotlenum = itotlenum + 40;
+	for (int i = 0; i < 40; i++)
+	{
+		switch (pGlobal->Visiondlg.iVisGetResult[i])
+		{
+		case 1:       itruenum = itruenum + 1;             break;
+		case 2:       ifalsenum = ifalsenum + 1;           break;
+		case 3:       inullnum = inullnum + 1;             break;
+
+		default:
+			break;
+		}
+	}
+	str.Format(_T("%d"), itotlenum);
+	WritePrivateProfileString(_T("VisNumLog"), _T("totlenum"), str, _T(".\\SystemInfo.ini"));
+	str.Format(_T("%d"), itruenum);
+	WritePrivateProfileString(_T("VisNumLog"), _T("truenum"), str, _T(".\\SystemInfo.ini"));
+	str.Format(_T("%d"), ifalsenum);
+	WritePrivateProfileString(_T("VisNumLog"), _T("falsenum"), str, _T(".\\SystemInfo.ini"));
+	str.Format(_T("%d"), inullnum);
+	WritePrivateProfileString(_T("VisNumLog"), _T("nullnum"), str, _T(".\\SystemInfo.ini"));
+	return 0;
+}
+
+afx_msg LRESULT CJIMIDlg::OnUWLogStatue(WPARAM wParam, LPARAM lParam)
+{
+	CString str;
+	int itotlenum, itruenum, ifalsenum, ierrornum,inullnum;
+	int num;
+	GetPrivateProfileString(_T("UWNumLog"), _T("totlenum"), _T("0"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
+	itotlenum = _ttoi(str);
+	GetPrivateProfileString(_T("UWNumLog"), _T("truenum"), _T("0"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
+	itruenum = _ttoi(str);
+	GetPrivateProfileString(_T("UWNumLog"), _T("falsenum"), _T("0"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
+	ifalsenum = _ttoi(str);
+	GetPrivateProfileString(_T("UWNumLog"), _T("erroenum"), _T("0"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
+	ierrornum = _ttoi(str);
+	GetPrivateProfileString(_T("UWNumLog"), _T("nullnum"), _T("0"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
+	inullnum = _ttoi(str);
+
+	itotlenum = itotlenum + 40;
+	for (int i = 0; i < 40; i++)
+	{
+		switch (pGlobal->Visiondlg.iVisGetResult[i])//
+		{
+		case 1:       itruenum = itruenum + 1;             break;
+		case 2:       ifalsenum = ifalsenum + 1;           break;
+		case 3:       ierrornum = ierrornum + 1;             break;
+		case 4:       inullnum = inullnum + 1;             break;
+
+		default:
+			break;
+		}
+	}
+	str.Format(_T("%d"), itotlenum);
+	WritePrivateProfileString(_T("UWNumLog"), _T("totlenum"), str, _T(".\\SystemInfo.ini"));
+	str.Format(_T("%d"), itruenum);
+	WritePrivateProfileString(_T("UWNumLog"), _T("truenum"), str, _T(".\\SystemInfo.ini"));
+	str.Format(_T("%d"), ifalsenum);
+	WritePrivateProfileString(_T("UWNumLog"), _T("falsenum"), str, _T(".\\SystemInfo.ini"));
+	str.Format(_T("%d"), ierrornum);
+	WritePrivateProfileString(_T("UWNumLog"), _T("erroenum"), str, _T(".\\SystemInfo.ini"));
+	str.Format(_T("%d"), inullnum);
+	WritePrivateProfileString(_T("UWNumLog"), _T("nullnum"), str, _T(".\\SystemInfo.ini"));
+	return 0;
+}
 
 void CJIMIDlg::OnBnClickedBtnClearerror()
 {
@@ -805,7 +913,8 @@ void CJIMIDlg::initMainTab()
 	m_Maintab.InsertItem(0, _T("机器人"));         // 插入第一个标签
 	m_Maintab.InsertItem(1, _T("VISION"));
 	m_Maintab.InsertItem(2, _T("UW"));
-	m_Maintab.InsertItem(3, _T("运行界面"));
+	m_Maintab.InsertItem(3, _T("扫码测试"));
+	m_Maintab.InsertItem(4, _T("运行界面"));
 	
 	//m_Maintab.InsertItem(2, _T("其它"));
 	CRect tabRect;   // 标签控件客户区的位置和大小
@@ -814,6 +923,7 @@ void CJIMIDlg::initMainTab()
 	Visiondlg.Create(IDD_DLG_VisionTest, &m_Maintab); // 创建第二个标签页  
 	Autouidlg.Create(IDD_DLG_AutoUI, &m_Maintab); // 创建第三个标签页  
 	UWdlg.Create(IDD_DLG_UW_Test, &m_Maintab); // 创建第四个标签页  
+	CSdlg.Create(IDD_DLG_CodeScan, &m_Maintab); // 创建第五个标签页  
 	m_Maintab.GetWindowRect(&tabRect);
 
 	tabRect.left += 1;
@@ -826,6 +936,7 @@ void CJIMIDlg::initMainTab()
 	Visiondlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 	Autouidlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 	UWdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
+	CSdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 	return;
 }
 
@@ -842,6 +953,7 @@ void CJIMIDlg::ShowAutouidlg()
 	RBTCTdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 	Visiondlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 	UWdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
+	CSdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 }
 
 void CJIMIDlg::OnSelchangeTabMian(NMHDR *pNMHDR, LRESULT *pResult)
@@ -862,24 +974,35 @@ void CJIMIDlg::OnSelchangeTabMian(NMHDR *pNMHDR, LRESULT *pResult)
 		Visiondlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 		Autouidlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 		UWdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
+		CSdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 		break;  
 	case 1://VISION
 		RBTCTdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 		Visiondlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_SHOWWINDOW);
 		Autouidlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 		UWdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
+		CSdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 		break;
 	case 2://UW
 		Autouidlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 		RBTCTdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 		Visiondlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 		UWdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_SHOWWINDOW);		
+		CSdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 		break;
-	case 3://运行界面
+	case 3://扫码测试
+		Autouidlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
+		RBTCTdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
+		Visiondlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
+		UWdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
+		CSdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_SHOWWINDOW);
+		break;
+	case 4://运行界面
 		Autouidlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_SHOWWINDOW);
 		RBTCTdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 		Visiondlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 		UWdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
+		CSdlg.SetWindowPos(NULL, tabRect.left, tabRect.top, tabRect.Width(), tabRect.Height(), SWP_HIDEWINDOW);
 		break;
 	default:
 		break;
@@ -919,12 +1042,23 @@ void CJIMIDlg::EventInitial()
 	Handle_UWRetData_out = CreateEvent(NULL, FALSE, FALSE, NULL);
 	Handle_UWRetData_ack = CreateEvent(NULL, FALSE, FALSE, NULL);
 	Handle_UWRetData_reach_in = CreateEvent(NULL, FALSE, FALSE, NULL);
+	Handle_UWRetData_forklift_reach = CreateEvent(NULL, FALSE, FALSE, NULL);
+	Handle_UWRetData_material_position_info = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 	ResetEvent(Handle_UWRetData);
 	ResetEvent(Handle_UWRetData_reach_out);
 	ResetEvent(Handle_UWRetData_out);
 	ResetEvent(Handle_UWRetData_ack);
 	ResetEvent(Handle_UWRetData_reach_in);
+	ResetEvent(Handle_UWRetData_forklift_reach);
+	ResetEvent(Handle_UWRetData_forklift_reach);
+
+	Handle_CSRetData[0] = CreateEvent(NULL, FALSE, FALSE, NULL);
+	ResetEvent(Handle_CSRetData[0]);
+	Handle_CSRetData[1] = CreateEvent(NULL, FALSE, FALSE, NULL);
+	ResetEvent(Handle_CSRetData[1]);
+	Handle_CSRetData[2] = CreateEvent(NULL, FALSE, FALSE, NULL);
+	ResetEvent(Handle_CSRetData[2]);
 }
 
 void CJIMIDlg::OnBnClickedButtonComok2()
@@ -976,14 +1110,13 @@ UINT CJIMIDlg::AutoRunThread(LPVOID pParam)
 			
 			if (true == pGlobal->bUWCon)//
 			{
-				//if (pThisThreadDlg->UW_ON_MainRunProgramAsFolow()) //主线程加工函数,带UW运行，此函数必须按顺序，一步一步来
 				if (pThisThreadDlg->UW_ON_MainRunProgram()) //主线程加工函数,带UW运行，此函数可按照任意顺序执行UW命令				
 				{
 					pThisThreadDlg->bRunAutoThread = false;
 					pThisThreadDlg->GetDlgItem(IDC_TAB_Mian)->EnableWindow(TRUE);
 					pThisThreadDlg->GetDlgItem(IDC_BTM_InitialALL)->EnableWindow(TRUE);
 					pThisThreadDlg->GetDlgItem(IDC_BTM_RunMain)->EnableWindow(TRUE);
-					pThisThreadDlg->GetDlgItem(IDC_BTM_CycleStop)->EnableWindow(TRUE);
+					pThisThreadDlg->GetDlgItem(IDC_BTM_CycleStop)->EnableWindow(FALSE);
 					pThisThreadDlg->GetDlgItem(IDC_BTM_Stop)->EnableWindow(FALSE);
 					
 				//	pGlobal->UWSocekt.CloseSocket();
@@ -1009,6 +1142,7 @@ UINT CJIMIDlg::AutoRunThread(LPVOID pParam)
 					pThisThreadDlg->GetDlgItem(IDC_BTM_CycleStop)->EnableWindow(FALSE);
 					pThisThreadDlg->GetDlgItem(IDC_BTM_Stop)->EnableWindow(FALSE);
 					Sleep(10);
+					pThisThreadDlg->bmark = true;
 					pThisThreadDlg->iProcessTimes = 1;
 				}
 				else
@@ -1069,6 +1203,10 @@ bool CJIMIDlg::InitialResetevent()
 	//ResetEvent(Handle_UWRetData_out);
 	//ResetEvent(Handle_UWRetData_ack);
 	//ResetEvent(Handle_UWRetData_reach_in);
+
+	ResetEvent(Handle_CSRetData[0]);
+	ResetEvent(Handle_CSRetData[1]);
+	ResetEvent(Handle_CSRetData[2]);
 	return true;
 }
 bool CJIMIDlg::InitialALL()
@@ -1076,268 +1214,170 @@ bool CJIMIDlg::InitialALL()
 	//自动前初始化全部硬件
 	bool bret;
 	InitialResetevent();
+	//初始化位置
+	WritePrivateProfileString(_T("ProcessDATA"), _T("UWStartPos"), _T("0"), _T(".\\SystemInfo.ini"));
 	/////////初始化电爪///////////
-	if (!pGlobal->RBTCTdlg.IniIOClamp())
-	{
-		pGlobal->AddToErrorList(_T("夹爪初始化失败"));
-		return false;
-	}
+	//if (!pGlobal->RBTCTdlg.IniIOClamp())
+	//{
+	//	pGlobal->AddToErrorList(_T("夹爪初始化失败"));
+	//	return false;
+	//}
 
 	return true;
 }
 
-int CJIMIDlg::UW_ON_MainRunProgramAsFolow()
-{
-	int bret;
-	//////////////////////////////////Step1///////////////////////////////////////////
-	pGlobal->AddToRunList(_T("----- Step1.0:等待UW_reach_out出库的命令 -----"));
-	DWORD dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_reach_out, INFINITE);
-	if (bCycleStop)
-	{
-		return 1;
-	}
-	if (dwState - WAIT_OBJECT_0 == 0)
-	{
-		ResetEvent(pGlobal->Handle_UWRetData_reach_out);
-		pGlobal->AddToRunList(_T("-----Step1.1:UW的出库到账信号:reach_out-----"));
-		pGlobal->UWdlg.UW_Ack_Send();
-		pGlobal->AddToRunList(_T("-----Step1.2:ROBOT回复UW ack命令-----"));
-	}
-	//////////////////////////////////Step2///////////////////////////////////////////
-	pGlobal->AddToRunList(_T("----- Step2.0:等待UW_out出库的命令 -----"));
-	dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_out, 300000);	
-	if (bCycleStop)
-	{
-		return 1;
-	}
-	if (dwState - WAIT_OBJECT_0 == 0)
-	{
-		ResetEvent(pGlobal->Handle_UWRetData_out);
-		pGlobal->AddToRunList(_T("-----Step2.1:UW的出库到账信号:out-----"));
-		pGlobal->UWdlg.UW_Ack_Send();
-		pGlobal->AddToRunList(_T("-----Step2.2:ROBOT回复UW ack命令-----"));
-		pGlobal->AddToRunList(_T("-----Step2.3:ROBOT开始进行出库取放料-----"));
-		////////机械臂开始取放料//////////
-		bret = UW_OUT_IN_ROBOT_Process();
-		if (bret != 0)
-		{
-			pGlobal->AddToRunList(_T("-----Step2.4:ROBOT出库取放料动作机器人动作失败-----"));
-			pGlobal->UWdlg.UW_OutFinish_Send(_T("success"));
-			pGlobal->AddToErrorList(_T("-----Step2.5:ROBOT发送出库结果：失败-----"));
-			return bret;
-		}
-		else
-		{
-			pGlobal->AddToRunList(_T("-----Step2.4:ROBOT出库取放料动作完成-----"));
-			pGlobal->UWdlg.UW_OutFinish_Send(_T("success"));
-			pGlobal->AddToRunList(_T("-----Step2.5:ROBOT发送出库结果：成功-----"));
-		}
-	}
-	else if (WAIT_TIMEOUT == dwState)
-	{
-		ResetEvent(pGlobal->Handle_UWRetData_out);
-		pGlobal->AddToErrorList(_T("-----Step2.1.:等到UW_OUT信号300s超时"));
-		return 1;
-	}
-	//////////////////////////////////Step3///////////////////////////////////////////
-	pGlobal->AddToRunList(_T("----- Step3.0:等待UW_ack出库的命令 -----"));
-	dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_ack, 50000);
-	if (bCycleStop)
-	{		
-		return 1;
-	}
-	if (dwState - WAIT_OBJECT_0 == 0)
-	{
-		ResetEvent(pGlobal->Handle_UWRetData_ack);
-		pGlobal->AddToRunList(_T("-----Step3.1.:收到UW的ack出库信号-----"));
-	}
-	else if (WAIT_TIMEOUT == dwState)
-	{
-		ResetEvent(pGlobal->Handle_UWRetData_ack);
-		pGlobal->AddToErrorList(_T("-----Step3.1.:等到UW_ack出库信号50s超时"));
-		return 1;
-	}
-	/////////////开始入库//////////////////////////
-	//////////////////////////////////Step4///////////////////////////////////////////
-	pGlobal->AddToRunList(_T("----- Step4.0:等待UW_reach_in入库的命令 -----"));
-	dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_reach_in, INFINITE);
-	if (bCycleStop)
-	{
-		return 1;
-	}
-	if (dwState - WAIT_OBJECT_0 == 0)
-	{
-		ResetEvent(pGlobal->Handle_UWRetData_reach_in);
-		pGlobal->AddToRunList(_T("-----Step4.1:UW的入库到账信号:reach_in-----"));
-		pGlobal->UWdlg.UW_Ack_Send();
-		pGlobal->AddToRunList(_T("-----Step4.2:ROBOT回复UW ack命令-----"));
-		pGlobal->AddToRunList(_T("-----Step4.3:ROBOT开始进行入库取放料-----"));
-		////////机械臂开始取放料//////////
-		bret = UW_OUT_IN_ROBOT_Process();
-		if (bret != 0)
-		{
-			pGlobal->AddToRunList(_T("-----Step4.4:ROBOT入库取放料动作机器人动作失败-----"));
-			pGlobal->UWdlg.UW_InFinish_Send();
-			pGlobal->AddToRunList(_T("-----Step4.5:ROBOT发送入库结果：失败-----"));
-			return bret;
-		}
-		else
-		{
-			pGlobal->AddToRunList(_T("-----Step3.4:ROBOT入库取放料动作完成-----"));
-			pGlobal->UWdlg.UW_InFinish_Send();
-			pGlobal->AddToRunList(_T("-----Step3.5:ROBOT发送入库结果：成功-----"));
-		}
-	}
-	//////////////////////////////////Step5///////////////////////////////////////////
-	pGlobal->AddToRunList(_T("----- Step5.0:等待UW_ack入库的命令 -----"));
-	dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_ack, 50000);
-	if (bCycleStop)
-	{
-		return 1;
-	}
-	if (dwState - WAIT_OBJECT_0 == 0)
-	{
-		ResetEvent(pGlobal->Handle_UWRetData_ack);
-		pGlobal->AddToRunList(_T("-----Step5.1.:收到UW的ack入库信号-----"));
-	}
-	else if (WAIT_TIMEOUT == dwState)
-	{
-		ResetEvent(pGlobal->Handle_UWRetData_ack);
-		pGlobal->AddToErrorList(_T("-----Step5.1.:等到UW_ack入库信号50s超时"));
-		return 1;
-	}
-
-	return 0;
-}
 int CJIMIDlg::UW_ON_MainRunProgram()
 {
+	DWORD dwState;
+	int iret,ret;
+	CString str;
+	pGlobal->UWdlg.iErrorCode = 0;
 	if (false == pGlobal->UWSocekt.m_bConnected)
 	{
 		pGlobal->AddToErrorList(_T("UW_Socket连接失败!!退出循环"));
 		return 1;
 	}
 	int bret;
-	pGlobal->AddToRunList(_T("----- 等待UW的命令 -----"));
-	DWORD dwState = WaitForSingleObject(pGlobal->Handle_UWRetData,INFINITE );
-	if (bCycleStop)
+	///------step 1、机器人ready-----可以进行
+	//-------此处要加是否需要-ready，如果是异常处理则不需要再次发ready---
+	GetPrivateProfileString(_T("ProcessDATA"), _T("NeedReady"), _T("1"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
+	pGlobal->UWdlg.bNeedReady = _ttoi(str);//从历史记录的数据开始计数
+	if (1 == pGlobal->UWdlg.bNeedReady)
 	{
-		return 1;
-	}
-	//得到数据，然后处理json数据，然后再开启以下的步骤。//先出库再入库
-	ResetEvent(pGlobal->Handle_UWRetData);
-	//pGlobal->UWdlg.UW_Read_cmdcode_DealData(pGlobal->UWSocekt.sJsonDATA);
-	if (pGlobal->UWdlg.sRecvCmdCode == _T("reach_out"))
-	{
-		pGlobal->AddToRunList(_T("-----Step1.1:UW的出库到账信号:reach_out-----"));
-		pGlobal->UWdlg.UW_Ack_Send();
-		pGlobal->AddToRunList(_T("-----Step1.2:ROBOT回复UW ack命令-----"));	
-		//////////////////////////////////Step2///////////////////////////////////////////
-		pGlobal->AddToRunList(_T("----- Step2.0:等待UW_out出库的命令 -----"));
-		dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_out, 300000);
+		ret = BackToStartPos();
+		if (!ret || bCycleStop)
+		{
+			return 1;
+		}
+		ResetEvent(pGlobal->Handle_UWRetData_ack);
+		ResetEvent(pGlobal->Handle_UWRetData_forklift_reach);
+		pGlobal->UWdlg.UW_Ready_Send();
+		////等待UW回复ACK信号----
+		pGlobal->AddToRunList(_T("-----step1.1、机器人ready，等待UW ACK信号..... -----"));
+		dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_ack, 3000);
 		if (bCycleStop)
 		{
 			return 1;
 		}
 		if (dwState - WAIT_OBJECT_0 == 0)
 		{
-			ResetEvent(pGlobal->Handle_UWRetData_out);
-			pGlobal->AddToRunList(_T("-----Step2.1:UW的出库到账信号:out-----"));
-			pGlobal->UWdlg.UW_Ack_Send();
-			pGlobal->AddToRunList(_T("-----Step2.2:ROBOT回复UW ack命令-----"));
-			pGlobal->AddToRunList(_T("-----Step2.3:ROBOT开始进行出库取放料-----"));
-			////////机械臂开始取放料//////////
-			bret = UW_OUT_IN_ROBOT_Process();
+			ResetEvent(pGlobal->Handle_UWRetData_ack);
+			pGlobal->AddToRunList(_T("-----Step1.2.:收到UW的ack信号-----"));
+		}
+		else if (WAIT_TIMEOUT == dwState)
+		{
+			ResetEvent(pGlobal->Handle_UWRetData_ack);
+			pGlobal->AddToErrorList(_T("-----Step1.2.:等到UW_ack出库信号3s超时"));
+			return 1;
+		}
+		pGlobal->AddToRunList(_T("-----step1.3、机器人收到ready_ACK，等待UW叉车到站信号..... -----"));
+	    dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_forklift_reach,INFINITE );
+		if (dwState - WAIT_OBJECT_0 == 0)
+		{
+			ResetEvent(pGlobal->Handle_UWRetData_forklift_reach);
+			pGlobal->AddToRunList(_T("-----Step1.4.:收到UW的已经到站的信号!向UW发送到帐ACK-----"));
+			//pGlobal->UWdlg.UW_Ack_Send();
+
+			pGlobal->UWdlg.bNeedReady = 0;
+			WritePrivateProfileString(_T("ProcessDATA"), _T("NeedReady"), _T("0"), _T(".\\SystemInfo.ini"));
+		}
+		if (bCycleStop)
+		{
+			return 1;
+		}
+
+		///------step 2.0、视觉开始全盘定位		
+		pGlobal->AddToRunList(_T("-----step2.0、视觉开始全盘定位 -----"));
+		//iPos  第几个取料位置，总共40个,0开始计数，ipos为1，4，7，10，13，16，19，21，24，27，30，33，36，39，3个一组一拍三，
+		for (int i = 0; i < 6; i++)
+		{
+			bret = pGlobal->Visiondlg.GoGetPosAndMark(1 + i * 3);
 			if (bret != 0)
 			{
-				pGlobal->AddToRunList(_T("-----Step2.4:ROBOT出库取放料动作机器人动作失败-----"));
-				pGlobal->UWdlg.UW_OutFinish_Send(_T("success"));
-				pGlobal->AddToErrorList(_T("-----Step2.5:ROBOT发送出库结果：失败-----"));
-				return bret;
+				pGlobal->AddToErrorList(_T("-----step2.0、视觉1-19定位异常 -----"));
+				return 1;
 			}
-			else
+		}
+		bret = pGlobal->Visiondlg.GoGetPosAndMark(18);//一拍三的单独处理
+		for (int i = 0; i < 6; i++)
+		{
+			bret = pGlobal->Visiondlg.GoGetPosAndMark(21 + i * 3);
+			if (bret != 0)
 			{
-				pGlobal->AddToRunList(_T("-----Step2.4:ROBOT出库取放料动作完成-----"));
-				pGlobal->UWdlg.UW_OutFinish_Send(_T("success"));
-				pGlobal->AddToRunList(_T("-----Step2.5:ROBOT发送出库结果：成功-----"));
+				pGlobal->AddToErrorList(_T("-----step2.0、视觉21-39定位异常 -----"));
+				return 1;
 			}
 		}
-		else if (WAIT_TIMEOUT == dwState)
+		bret = pGlobal->Visiondlg.GoGetPosAndMark(38);//一拍三的单独处理
+		bmark = false;
+		for (int i = 0; i < 40; i++)
 		{
-			ResetEvent(pGlobal->Handle_UWRetData_out);
-			pGlobal->AddToErrorList(_T("-----Step2.1.:等到UW_OUT信号300s超时"));
-			return 1;
+			iUWetResult[i] = 0;
 		}
-		//////////////////////////////////Step3///////////////////////////////////////////
-		pGlobal->AddToRunList(_T("----- Step3.0:等待UW_ack出库的命令 -----"));
-		dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_ack, 50000);
-		if (bCycleStop)
-		{
-			return 1;
-		}
-		if (dwState - WAIT_OBJECT_0 == 0)
-		{
-			ResetEvent(pGlobal->Handle_UWRetData_ack);
-			pGlobal->AddToRunList(_T("-----Step3.1.:收到UW的ack出库信号-----"));
-		}
-		else if (WAIT_TIMEOUT == dwState)
-		{
-			ResetEvent(pGlobal->Handle_UWRetData_ack);
-			pGlobal->AddToErrorList(_T("-----Step3.1.:等到UW_ack出库信号50s超时"));
-			return 1;
-		}
-		iProcessTimes++;
-	}
-	/////////////////////////////////////入库与出库分开//////////////////////////////
-	/////////////////////////////////////入库//////////////////////////////
-	else if (pGlobal->UWdlg.sRecvCmdCode == _T("reach_in"))
+
+	}	
+	//得到数据，然后处理json数据，然后再开启以下的步骤。//先出库再入库
+	if (bmark == true)
 	{
-		pGlobal->AddToRunList(_T("-----Step3.1:UW的入库到账信号:reach_in-----"));
-		pGlobal->UWdlg.UW_Ack_Send();
-		pGlobal->AddToRunList(_T("-----Step3.2:ROBOT回复UW ack命令-----"));
-		pGlobal->AddToRunList(_T("-----Step3.3:ROBOT开始进行入库取放料-----"));
-		////////机械臂开始取放料//////////
-		pGlobal->UWdlg.sRecvCmdCode = _T("reach_in");
-		bret = UW_OUT_IN_ROBOT_Process();
-		if (bret != 0)
+		
+		/////------step 2.0、视觉开始全盘定位
+		pGlobal->AddToRunList(_T("-----step2.0、视觉开始全盘定位 -----"));
+		//iPos  第几个取料位置，总共40个,0开始计数，ipos为1，4，7，10，13，16，19，21，24，27，30，33，36，39，3个一组一拍三，
+		for (int i = 0; i < 6; i++)
 		{
-			pGlobal->AddToRunList(_T("-----Step3.4:ROBOT入库取放料动作机器人动作失败-----"));
-			pGlobal->UWdlg.UW_InFinish_Send();
-			pGlobal->AddToRunList(_T("-----Step3.5:ROBOT发送入库结果：失败-----"));
-			return bret;
+			bret = pGlobal->Visiondlg.GoGetPosAndMark(1 + i * 3);
+			if (bret != 0)
+			{
+				pGlobal->AddToErrorList(_T("-----step2.0、视觉1-19定位异常 -----"));
+				return 1;
+			}
 		}
-		else
+		bret = pGlobal->Visiondlg.GoGetPosAndMark(18);//一拍三的单独处理
+		for (int i = 0; i < 6; i++)
 		{
-			pGlobal->AddToRunList(_T("-----Step3.4:ROBOT入库取放料动作完成-----"));
-			pGlobal->UWdlg.UW_InFinish_Send();
-			pGlobal->AddToRunList(_T("-----Step3.5:ROBOT发送入库结果：成功-----"));
-			//ResetEvent(pGlobal->Handle_UWRetData);
-			//dwState = WaitForSingleObject(pGlobal->Handle_UWRetData, INFINITE);
+			bret = pGlobal->Visiondlg.GoGetPosAndMark(21 + i * 3);
+			if (bret != 0)
+			{
+				pGlobal->AddToErrorList(_T("-----step2.0、视觉21-39定位异常 -----"));
+				return 1;
+			}
 		}
-		//////////////////////////////////Step5///////////////////////////////////////////
-		pGlobal->AddToRunList(_T("----- Step5.0:等待UW_ack入库的命令 -----"));
-		dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_ack, 50000);
-		if (bCycleStop)
+		bret = pGlobal->Visiondlg.GoGetPosAndMark(38);//一拍三的单独处理
+		bmark = false;
+		for (int i = 0; i < 40; i++)
 		{
-			return 1;
+			iUWetResult[i] = 0;
 		}
-		if (dwState - WAIT_OBJECT_0 == 0)
-		{
-			ResetEvent(pGlobal->Handle_UWRetData_ack);
-			pGlobal->AddToRunList(_T("-----Step5.1.:收到UW的ack入库信号-----"));
-		}
-		else if (WAIT_TIMEOUT == dwState)
-		{
-			ResetEvent(pGlobal->Handle_UWRetData_ack);
-			pGlobal->AddToErrorList(_T("-----Step5.1.:等到UW_ack入库信号50s超时"));
-			return 1;
-		}
-		iProcessTimes++;
 	}
-	else if (pGlobal->UWdlg.sRecvCmdCode == _T("ack"))
+
+	
+	if (1 == UWdlg.itype)//1出库2盘点
 	{
-		ResetEvent(pGlobal->Handle_UWRetData_ack);
-		pGlobal->AddToRunList(_T("-----Step..:收到UW的ack信号-----"));
+		bret = UW_OUT_Process();
+		if (bret == 1)
+		{
+			return 1;
+		}
 	}
+	else if (2 == UWdlg.itype)
+	{
+		pGlobal->RBTCTdlg.iWorkType = 1;
+		bret = UW_CheckALL_Process();
+		if (bret == 1)
+		{
+			return 1;
+		}
+	}
+	else
+	{
+		pGlobal->AddToErrorList(_T(" UW type任务错误！！"));
+		return 1;
+	}
+	
+////////////////////////////////////////////////	
+////////////////////////////////////////////////
+	//BackToStartPos();
+	::PostMessage(this->m_hWnd, WM_VisNumLog, NULL, NULL);
 	return 0;
 }
 int CJIMIDlg::UW_OFF_MainRunProgram()
@@ -1352,7 +1392,24 @@ int CJIMIDlg::UW_OFF_MainRunProgram()
 	int ret;//位置返回值
 	bool bret;
 	int i;//for循环用
-
+	if (true == bVisionCon)
+	{
+		if (bmark == true)
+		{
+			/////------step 2.0、视觉开始全盘定位
+			pGlobal->AddToRunList(_T("-----step2.0、视觉开始全盘定位 -----"));
+			for (int i = 0; i < 8; i++)
+			{
+				bret = pGlobal->Visiondlg.GoGetPosAndMark(2 + i * 5);
+				if (bret != 0)
+				{
+					pGlobal->AddToErrorList(_T("-----step2.0、视觉定位异常 -----"));
+					return 1;
+				}
+			}
+			bmark = false;
+		}
+	}
 	////////////////IO夹松开紧开始//////////////////////////
 	Sleep(100);//此处可以添加夹料IO处理
 	ret = pGlobal->RBTCTdlg.OpenClamp();
@@ -1385,68 +1442,17 @@ int CJIMIDlg::UW_OFF_MainRunProgram()
 		if (true == bVisionCon)
 		{
 			str.Format(_T("%d"), itimes+1);
-			///////*****************1、取料定位*************////////////////
-			//pGlobal->AddToRunList(_T("--------2、前往第") + str + _T("个取料位置视觉定位"));
-			//pGlobal->iRbtStatue = RbtMarkGet;
-			//ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunGetPos, 100);
-			//if (!ret || bCycleStop)
-			//{
-			//	return 1;
-			//}
-			//Sleep(1500);
-			//pGlobal->AddToRunList(_T("将位置发送给相机"));
-			//ret = pGlobal->Visiondlg.SendAndGetVisRetPos(sRunGetPos);
-			//if (ret ==0 || ret == 2 || bCycleStop)
-			//{
-			//	return 1;
-			//}
-			//for (i = 0; i < 7; i++)
-			//{
-			//	sRunGetPos[i] = pGlobal->Visiondlg.sRecvPos[i];//定好视觉更新后的取料位置
-			//}
-			//sGetAngle = pGlobal->Visiondlg.sRomateAngle;
-			//Sleep(100);
 			/////*****************2、放料定位*************////////////////
-			pGlobal->AddToRunList(_T("--------1、前往第") + str + _T("个放料料位置视觉定位"));
-			pGlobal->iRbtStatue = RbtMarkPut;
-			ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunPutPos, 100);
-			if (!ret || bCycleStop)
-			{
-				return 1;
-			}
-			Sleep(1500);
-			pGlobal->AddToRunList(_T("将位置发送给相机"));
-			ret = pGlobal->Visiondlg.SendAndGetVisRetPos(sRunPutPos);
-			if (ret == 0 || ret == 2 || ret == 3 || bCycleStop)
-			{
-				return 1;
-			}
-			for (i = 0; i < 7; i++)
-			{
-				sRunPutPos[i] = pGlobal->Visiondlg.sRecvPos[i];//定好视觉更新后的取料位置
-			}
-			sPutAngle = pGlobal->Visiondlg.sRomateAngle;
-			Sleep(100);
+	
 			/////*****************1、取料定位************* 先定放料位的位置，节省行程////////////////
 			pGlobal->AddToRunList(_T("--------2、前往第") + str + _T("个取料位置视觉定位"));
 			pGlobal->iRbtStatue = RbtMarkGet;
-			ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunGetPos, 100);
-			if (!ret || bCycleStop)
-			{
-				return 1;
-			}
-			Sleep(1500);
-			pGlobal->AddToRunList(_T("将位置发送给相机"));
-			ret = pGlobal->Visiondlg.SendAndGetVisRetPos(sRunGetPos);
-			if (ret == 0 || ret == 2 || bCycleStop)
-			{
-				return 1;
-			}
+
 			for (i = 0; i < 7; i++)
 			{
-				sRunGetPos[i] = pGlobal->Visiondlg.sRecvPos[i];//定好视觉更新后的取料位置
+				sRunGetPos[i] = pGlobal->Visiondlg.sVisGetPos[itimes][i];//定好视觉更新后的取料位置
 			}
-			sGetAngle = pGlobal->Visiondlg.sRomateAngle;
+			sGetAngle = pGlobal->Visiondlg.sVisGetAngle[itimes];
 			Sleep(100);
 		}
 		/////*****************3、取料位取料*************////////////////
@@ -1468,7 +1474,6 @@ int CJIMIDlg::UW_OFF_MainRunProgram()
 		}
 		slen .Format(_T("%f"), 0 - pGlobal->RBTCTdlg.dbGetProDis);
 		ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
-		//ret = pGlobal->RBTCTdlg.MoveToPostion(Approch_L, sRunGetPos, 0 - pGlobal->RBTCTdlg.dbGetProDis);
 		if (!ret || bCycleStop)
 		{
 			return 1;
@@ -1485,15 +1490,14 @@ int CJIMIDlg::UW_OFF_MainRunProgram()
 			return 1;
 		}
 		////////////////IO夹爪夹紧结束//////////////////////////
-		slen.Format(_T("%f"), pGlobal->RBTCTdlg.dbGetProDis);
+		slen.Format(_T("%f"), pGlobal->RBTCTdlg.dbPutProDis);//这个地方不需要完全起来
 		ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
-		//ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunGetPos, 100);
 		if (!ret || bCycleStop)
 		{
 			return 1;
 		}
 		/////////////////////判断夹爪是否取料////////////////
-		if (true == bVisionCon)//旋转视觉返回的旋转角度
+		if (true == bVisionCon )//旋转视觉返回的旋转角度
 		{
 			if (0 == pGlobal->Visiondlg.bSuccessGet())
 			{
@@ -1636,24 +1640,26 @@ int CJIMIDlg::UW_OFF_MainRunProgram()
 		}
 		
 		/////*****************4、放料位放料*************////////////////
-		pGlobal->AddToRunList(_T("--------4、前往定位后第") + str + _T("个放料位置放料"));
-		pGlobal->iRbtStatue = RbtPut;
-		ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunPutPos, 100);
-		if (!ret || bCycleStop)
+		if (1 != pGlobal->RBTCTdlg.iWorkType)//如果不是盘点，就不用
 		{
-			return 1;
-		}
-		Sleep(100);
-		if (true == bVisionCon)//旋转视觉返回的旋转角度
-		{
-			ret = pGlobal->RBTCTdlg.SingleAxisMove(Axis_6_RZ, sPutAngle);
+			pGlobal->AddToRunList(_T("--------4、前往定位后第") + str + _T("个放料位置放料"));
+			pGlobal->iRbtStatue = RbtPut;
+			ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunPutPos, 100);
 			if (!ret || bCycleStop)
 			{
 				return 1;
 			}
-		}
-
-		slen.Format(_T("%f"), 10 - pGlobal->RBTCTdlg.dbGetProDis);
+			Sleep(100);
+			if (true == bVisionCon )//旋转视觉返回的旋转角度,
+			{
+				ret = pGlobal->RBTCTdlg.SingleAxisMove(Axis_6_RZ, sPutAngle);
+				if (!ret || bCycleStop)
+				{
+					return 1;
+				}
+			}
+		}		
+		slen.Format(_T("%f"), 10 - pGlobal->RBTCTdlg.dbPutProDis);
 		ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
 		//ret = pGlobal->RBTCTdlg.MoveToPostion(Approch_L, sRunPutPos, 10 - pGlobal->RBTCTdlg.dbGetProDis);//要比取料高度高个10，防止撞到料盒
 		if (!ret || bCycleStop)
@@ -1682,6 +1688,7 @@ int CJIMIDlg::UW_OFF_MainRunProgram()
 		pGlobal->AddToRunList(_T("下料位置放料成功"));
 		Sleep(100);
 	}	
+	bmark = true;
 	return 0;
 }
 
@@ -1697,22 +1704,28 @@ void CJIMIDlg::OnBnClickedBtmRunmain()
 		{
 			pGlobal->UWSocekt.Config();
 			pGlobal->UWdlg.GetDlgItem(IDC_BTN_Connect)->SetWindowText(_T("断开"));
-			//pGlobal->UWdlg.GetDlgItem(IDC_BTN_HttpSEND)->EnableWindow(TRUE);
-			//pGlobal->UWdlg.GetDlgItem(IDC_EDIT_Send)->EnableWindow(TRUE);
-			pGlobal->UWdlg.GetDlgItem(IDC_BTN_RetLogin)->EnableWindow(TRUE);
-			pGlobal->UWdlg.GetDlgItem(IDC_BTN_RetAck)->EnableWindow(TRUE);
-			pGlobal->UWdlg.GetDlgItem(IDC_BTN_OutFinish)->EnableWindow(TRUE);
-			pGlobal->UWdlg.GetDlgItem(IDC_BTN_inFinish)->EnableWindow(TRUE);
-			//pGlobal->UWdlg.UW_Login_Send(_T("ur"));
+			pGlobal->UWdlg.WidgetStatue(TRUE);
 			Sleep(10);			
+		}
+		if (true == pGlobal->CSSocekt.m_bConnected)
+		{			
+		}
+		else
+		{
+			pGlobal->CSSocekt.Config();
+			pGlobal->CSdlg.SetDlgItemText(IDC_BTN_ConScanSocket, _T("断开"));
+			pGlobal->CSdlg.WidgetStatue(TRUE);
 		}
 	}
 	//ShowAutouidlg();
 	//GetDlgItem(IDC_TAB_Mian)->EnableWindow(FALSE);
 	//ResetEvent(Handle_UWRetData);
+	CString strMSG = _T("#,V,2,") + pGlobal->RBTCTdlg.CurSpeed + _T(",@");
+	pGlobal->MoveRbtSend(strMSG);//速度恢复
 	bRunAutoThread = true;
 	bCycleStop = false;
 	bRunStop = false;
+	RBTCTdlg.bIOUpdata = false;
 	GetDlgItem(IDC_BTM_InitialALL)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTM_RunMain)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTM_CycleStop)->EnableWindow(TRUE);
@@ -1739,6 +1752,19 @@ void CJIMIDlg::OnBnClickedBtmCyclestop()
 	SetEvent(Handle_UWRetData_out);//停止UW的持续等待动作
 	SetEvent(Handle_UWRetData_ack);//停止UW的持续等待动作
 	SetEvent(Handle_UWRetData_reach_in);//停止UW的持续等待动作
+	SetEvent(Handle_UWRetData_forklift_reach);//停止UW的持续等待动作
+	SetEvent(Handle_UWRetData_material_position_info);//停止UW的持续等待动作
+
+	ResetEvent(Handle_FinishPOS[1]);//机器人手动停止
+	ResetEvent(Handle_UWRetData);//停止UW的持续等待动作
+	ResetEvent(Handle_UWRetData_reach_out);//停止UW的持续等待动作
+	ResetEvent(Handle_UWRetData_out);//停止UW的持续等待动作
+	ResetEvent(Handle_UWRetData_ack);//停止UW的持续等待动作
+	ResetEvent(Handle_UWRetData_reach_in);//停止UW的持续等待动作
+	ResetEvent(Handle_UWRetData_forklift_reach);//停止UW的持续等待动作
+	ResetEvent(Handle_UWRetData_material_position_info);//停止UW的持续等待动作
+
+
 	GetDlgItem(IDC_TAB_Mian)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTM_InitialALL)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTM_RunMain)->EnableWindow(TRUE);
@@ -1762,11 +1788,24 @@ void CJIMIDlg::OnBnClickedBtmStop()
 		}
 	}
 	SetEvent(Handle_FinishPOS[1]);//机器人手动停止
+	//SetEvent(Handle_CSRetData[1]);
 	SetEvent(Handle_UWRetData);//停止UW的持续等待动作
 	SetEvent(Handle_UWRetData_reach_out);//停止UW的持续等待动作
 	SetEvent(Handle_UWRetData_out);//停止UW的持续等待动作
 	SetEvent(Handle_UWRetData_ack);//停止UW的持续等待动作
 	SetEvent(Handle_UWRetData_reach_in);//停止UW的持续等待动作
+	SetEvent(Handle_UWRetData_forklift_reach);//停止UW的持续等待动作
+	SetEvent(Handle_UWRetData_material_position_info);//停止UW的持续等待动作
+
+	ResetEvent(Handle_FinishPOS[1]);//机器人手动停止
+	ResetEvent(Handle_UWRetData);//停止UW的持续等待动作
+	ResetEvent(Handle_UWRetData_reach_out);//停止UW的持续等待动作
+	ResetEvent(Handle_UWRetData_out);//停止UW的持续等待动作
+	ResetEvent(Handle_UWRetData_ack);//停止UW的持续等待动作
+	ResetEvent(Handle_UWRetData_reach_in);//停止UW的持续等待动作
+	ResetEvent(Handle_UWRetData_forklift_reach);//停止UW的持续等待动作
+	ResetEvent(Handle_UWRetData_material_position_info);//停止UW的持续等待动作
+
 	GetDlgItem(IDC_TAB_Mian)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTM_InitialALL)->EnableWindow(TRUE);
 	GetDlgItem(IDC_BTM_RunMain)->EnableWindow(TRUE);
@@ -1806,6 +1845,7 @@ void CJIMIDlg::OnBnClickedBtmInitialall()
 	//		//pGlobal->UWdlg.UW_Login_Send(_T("ur"));
 	//	}
 	//}
+	bmark = true;
 	bInitialALL = true;
 	GetDlgItem(IDC_BTM_InitialALL)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTM_RunMain)->EnableWindow(FALSE);
@@ -1843,7 +1883,9 @@ void CJIMIDlg::OnTimer(UINT_PTR nIDEvent)
 	CDialogEx::OnTimer(nIDEvent);
 }
 
-int CJIMIDlg::UW_OUT_IN_ROBOT_Process()
+
+
+int CJIMIDlg::UW_Num_Code_Check_Process()
 {
 	CString sMsg, str;
 	CString sRunGetPos[7];
@@ -1851,18 +1893,18 @@ int CJIMIDlg::UW_OUT_IN_ROBOT_Process()
 	CString sMidTransPos[7];
 	CString sGetAngle = _T("0");
 	CString sPutAngle = _T("0");
-	CString slen;
+	CString slen,strMSG;
 	int ret;//位置返回值
 	bool bret;
 	int i;//for循环用
 	int itimes;//第几次加工
 	int row;
 	int cor;
-	int igetpos;
-	int iputpos;
+	//int igetpos;
+	//int iputpos;
 
-////////////////IO夹松开紧开始//////////////////////////
-	Sleep(100);//此处可以添加夹料IO处理
+	////////////////IO夹松开紧开始//////////////////////////
+	//Sleep(100);//此处可以添加夹料IO处理
 	ret = pGlobal->RBTCTdlg.OpenClamp();
 	if (!ret)
 	{
@@ -1874,331 +1916,712 @@ int CJIMIDlg::UW_OUT_IN_ROBOT_Process()
 	}
 	////////////////IO夹爪松开结束//////////////////////////
 	/////////////////////////////功能位置开始循环取放料处理//////////////////////
-	/////////////////////////////功能位置开始循环取放料处理//////////////////////
-	//	for (itimes = 0; itimes < pGlobal->RBTCTdlg.iProcessNum; itimes++)
-	for (itimes = 0; itimes < pGlobal->UWdlg.UW_ListPosNum; itimes++)//
+	/////////////////////////////功能位置开始循环取放料处理/////////////////////
+	row = pGlobal->UWdlg.iXpos;//行 
+	cor = pGlobal->UWdlg.iYpos;//列，从0，0开始
+	igetpos = cor * 40 + row * 2 + 1;
+	iputpos = cor * 40 + row * 2 + 2;
+	iCSTgetpos = cor * 20 + row;
+	if (row>20 || row<0 || cor >2 || cor<0 || iputpos>80)
 	{
-		row = pGlobal->UWdlg.UW_OutPos.row[itimes];//行 
-		cor = pGlobal->UWdlg.UW_OutPos.col[itimes];//列，从1，1开始
-		igetpos = (cor - 1) * 40 + row * 2 - 1;
-		iputpos = (cor - 1) * 40 + row * 2;
-		if (row>20 || row<0 ||cor >2 || cor<0 ||iputpos>80)
-		{
-			str.Format(_T("位置信息错误：行row = %d,列cor = %d"), row, cor);
-			return 1;
-		}
+		str.Format(_T("位置信息错误：行row = %d,列cor = %d"), row, cor);
+		pGlobal->AddToErrorList(str);
+		return 1;
+	}
+	str.Format(_T("当前位置信息：行row = %d,列cor = %d，第%d个位置取料"), row, cor,iCSTgetpos);
+	pGlobal->AddToRunList(str);
+	if (pGlobal->Visiondlg.sVisGetResult[iCSTgetpos]==Vis_True)//1、有料可夹；2、有料不可夹；3、无料；
+	{
+		pGlobal->AddToRunList(_T("视觉判断刀卡位置正常，有料可夹!!!!"));
+	}
+	else if (pGlobal->Visiondlg.sVisGetResult[iCSTgetpos] == Vis_False)
+	{
+		pGlobal->AddToErrorList(_T("视觉判断刀卡位置危险，有料不可夹!!!!!!!!!!"));
+		return 1;
+	}
+	else if (pGlobal->Visiondlg.sVisGetResult[iCSTgetpos] == Vis_Null)
+	{
+		pGlobal->AddToErrorList(_T("视觉判断刀卡位置位置为空，不可夹!!!!!!!!"));
+		return 1;
+	}
+	////////////////////////////////////////////////////////////////////
+	//////////////////-------出库或者盘点判断-------------///////////
+	if (1 == UWdlg.itype)//1出库2盘点
+	{
+		pGlobal->RBTCTdlg.iWorkType = 0;
+	}
+	else if(2 == UWdlg.itype)
+	{
+		pGlobal->RBTCTdlg.iWorkType = 1;
+	}
+	else
+	{
+		pGlobal->AddToErrorList(_T(" UW type任务错误！！"));
+		return 1;
+	}
+	//////////////////-------出库或者盘点判断-------------///////////
+	////////////////////////////////////////////////////////////////////
+	for (i = 0; i < 7; i++)
+	{
+		sRunGetPos[i] = pGlobal->RBTCTdlg.sFunctionPos[igetpos][i];
+		sRunPutPos[i] = pGlobal->RBTCTdlg.sFunctionPos[iputpos][i];
+		sMidTransPos[i] = pGlobal->RBTCTdlg.sFunctionPos[0][i];//中转点位用固定点位
+	}
+	if (true == bVisionCon)
+	{
+		/////*****************2、放料定位，盘点不需要放料定位，出库也暂时不需要定位*************////////////////
+
+		/////*****************1、取料定位//先定放料位的点，节省行程时间*************////////////////
+		/////*****************2.0.0版本已在前期定好位*************////////////////
+
 		for (i = 0; i < 7; i++)
-		{			
-			if (pGlobal->UWdlg.sRecvCmdCode == _T("out"))
-			{
-				sRunGetPos[i] = pGlobal->RBTCTdlg.sFunctionPos[igetpos][i];
-				sRunPutPos[i] = pGlobal->RBTCTdlg.sFunctionPos[iputpos][i];
-			}
-			else if (pGlobal->UWdlg.sRecvCmdCode == _T("reach_in"))//取放料位置颠倒过来
-			{
-				sRunGetPos[i] = pGlobal->RBTCTdlg.sFunctionPos[iputpos][i];
-				sRunPutPos[i] = pGlobal->RBTCTdlg.sFunctionPos[igetpos][i];
-			}
-			//sRunGetPos[i] = pGlobal->RBTCTdlg.sFunctionPos[itimes * 2 + 1][i];
-			//sRunPutPos[i] = pGlobal->RBTCTdlg.sFunctionPos[itimes * 2 + 2][i];
-			sMidTransPos[i] = pGlobal->RBTCTdlg.sFunctionPos[0][i];//中转点位用固定点位
-		}
-		str.Format(_T("%d"), itimes + 1);
-		if (true == bVisionCon)
 		{
-			///////*****************1、取料定位*************////////////////
-			//pGlobal->AddToRunList(_T("--------2、前往第") + str + _T("个取料位置视觉定位"));
-			//pGlobal->iRbtStatue = RbtMarkGet;
-			//ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunGetPos, 100);
-			//if (!ret || bCycleStop)
-			//{
-			//	return 1;
-			//}
-			//Sleep(1500);
-			//pGlobal->AddToRunList(_T("将位置发送给相机"));
-			//ret = pGlobal->Visiondlg.SendAndGetVisRetPos(sRunGetPos);
-			//if (ret == 0 || ret == 2 || bCycleStop)
-			//{
-			//	return 1;
-			//}
-			//for (i = 0; i < 7; i++)
-			//{
-			//	sRunGetPos[i] = pGlobal->Visiondlg.sRecvPos[i];//定好视觉更新后的取料位置
-			//}
-			//sGetAngle = pGlobal->Visiondlg.sRomateAngle;
-			//Sleep(100);
-			/////*****************2、放料定位*************////////////////
-			pGlobal->AddToRunList(_T("--------1、前往第") + str + _T("个放料料位置视觉定位"));
-			pGlobal->iRbtStatue = RbtMarkPut;
-			ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunPutPos, 100);
-			if (!ret || bCycleStop)
-			{
-				return 1;
-			}
-			Sleep(1500);
-			pGlobal->AddToRunList(_T("将位置发送给相机"));
-			ret = pGlobal->Visiondlg.SendAndGetVisRetPos(sRunPutPos);
-			if (ret == 0 || ret == 2 || ret == 3 || bCycleStop)
-			{
-				return 1;
-			}
-			for (i = 0; i < 7; i++)
-			{
-				sRunPutPos[i] = pGlobal->Visiondlg.sRecvPos[i];//定好视觉更新后的取料位置
-			}
-			sPutAngle = pGlobal->Visiondlg.sRomateAngle;
-			Sleep(100);
-			/////*****************1、取料定位//先定放料位的点，节省行程时间*************////////////////
-			pGlobal->AddToRunList(_T("--------2、前往第") + str + _T("个取料位置视觉定位"));
-			pGlobal->iRbtStatue = RbtMarkGet;
-			ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunGetPos, 100);
-			if (!ret || bCycleStop)
-			{
-				return 1;
-			}
-			Sleep(1500);
-			pGlobal->AddToRunList(_T("将位置发送给相机"));
-			ret = pGlobal->Visiondlg.SendAndGetVisRetPos(sRunGetPos);
-			if (ret == 0 || ret == 2 || bCycleStop)
-			{
-				return 1;
-			}
-			for (i = 0; i < 7; i++)
-			{
-				sRunGetPos[i] = pGlobal->Visiondlg.sRecvPos[i];//定好视觉更新后的取料位置
-			}
-			sGetAngle = pGlobal->Visiondlg.sRomateAngle;
-			Sleep(100);
+			sRunGetPos[i] = pGlobal->Visiondlg.sVisGetPos[iCSTgetpos][i];//定好视觉更新后的取料位置
 		}
-		/////*****************3、取料位取料*************////////////////
-		pGlobal->AddToRunList(_T("--------3、前往定位后第") + str + _T("个取料位置取料"));
-		pGlobal->iRbtStatue = RbtGet;
-		ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunGetPos, 100);
+		/////////基于视觉定位高度，取放料要比它稍微低一点点，因此需要z方向，下降当前高度；//////////
+		double dbdata = _ttof(sRunGetPos[2]) - pGlobal->RBTCTdlg.dbGetPutDownDis;
+		sRunGetPos[2].Format(_T("%f"), dbdata);
+		sRunPutPos[2].Format(_T("%f"), dbdata);
+
+		sGetAngle = pGlobal->Visiondlg.sVisGetAngle[iCSTgetpos];
+		sPutAngle = sGetAngle;//取放料同一个位置
+		Sleep(10);
+	}
+	/////*****************3、取料位取料*************////////////////
+	pGlobal->AddToRunList(_T("--------3、前往定位后取料位置取料"));
+	pGlobal->iRbtStatue = RbtGet;
+	ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunGetPos, 100);
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	Sleep(50);
+	if (true == bVisionCon)//旋转视觉返回的旋转角度
+	{
+		ret = pGlobal->RBTCTdlg.SingleAxisMove(Axis_6_RZ, sGetAngle);
 		if (!ret || bCycleStop)
 		{
 			return 1;
 		}
-		Sleep(100);
-		if (true == bVisionCon)//旋转视觉返回的旋转角度
-		{
-			ret = pGlobal->RBTCTdlg.SingleAxisMove(Axis_6_RZ, sGetAngle);
-			if (!ret || bCycleStop)
-			{
-				return 1;
-			}
-		}
-		slen.Format(_T("%f"), 0 - pGlobal->RBTCTdlg.dbGetProDis);
-		ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
-		//ret = pGlobal->RBTCTdlg.MoveToPostion(Approch_L, sRunGetPos, 0 - pGlobal->RBTCTdlg.dbGetProDis);
-		if (!ret || bCycleStop)
-		{
-			return 1;
-		}
-		////////////////IO夹爪夹紧开始//////////////////////////
-		Sleep(100);//此处可以添加夹料IO处理
+	}
+	/////////////////速度减慢////////////
+	Sleep(50);
+	int ispeed = _tstoi(pGlobal->RBTCTdlg.CurSpeed);
+	ispeed = ispeed / 2;
+	CString sspeed;
+	sspeed.Format(_T("%d"), ispeed);
+	strMSG = _T("#,V,2,") + sspeed + _T(",@");
+	pGlobal->MoveRbtSend(strMSG);//速度减半
+	Sleep(50);
+    /////////////////速度减慢////////////
+	/////////////////下降////////////
+	slen.Format(_T("%f"), 0 - pGlobal->RBTCTdlg.dbGetProDis + pGlobal->RBTCTdlg.dbGetPutDownDis);
+	ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);	
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	/////////////////速度减慢////////////
+	Sleep(50);
+	strMSG = _T("#,V,2,") + pGlobal->RBTCTdlg.CurSpeed + _T(",@");
+	pGlobal->MoveRbtSend(strMSG);//速度恢复
+	 /////////////////速度减慢////////////
+	////////////////IO夹爪夹紧开始//////////////////////////
+	Sleep(10);//此处可以添加夹料IO处理
+	ret = pGlobal->RBTCTdlg.CloseClamp();
+	if (!ret)
+	{
 		ret = pGlobal->RBTCTdlg.CloseClamp();
-		if (!ret)
+	}
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	////////////////IO夹爪夹紧结束//////////////////////////
+	slen.Format(_T("%f"), pGlobal->RBTCTdlg.dbPutProDis);//这个地方不需要完全起来
+	ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	pGlobal->AddToRunList(_T("取料成功"));
+	Sleep(10);
+
+	/////*********************************************////////////////		
+	/////****   此处添加扫码处理             *********////////////////
+	{
+		ret = UW_ScanCode_Process();
+		switch (ret)
 		{
-			ret = pGlobal->RBTCTdlg.CloseClamp();
-		}
-		if (!ret || bCycleStop)
-		{
+		case 0://扫码正常
+			break;
+		case 1://1为物料总数量异常
 			return 1;
-		}
-		////////////////IO夹爪夹紧结束//////////////////////////
-		slen.Format(_T("%f"), pGlobal->RBTCTdlg.dbGetProDis);
-		ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
-		//ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunGetPos, 100);
-		if (!ret || bCycleStop)
-		{
+			break;
+		case 2://2为未扫码到与UW匹配的物料ID
 			return 1;
-		}
-		/////////////////////判断夹爪是否取料////////////////
-		if (true == bVisionCon)//旋转视觉返回的旋转角度
-		{
-			if (0 == pGlobal->Visiondlg.bSuccessGet())
+			break;
+		case 3://扫码超时，移动料盘位置再扫一次则再扫一次
+			ret = UW_ReMoveANDScanCode_Process();
+			if (ret != 0)
 			{
-				//如果没有取料成功，那就再夹一次；
-				ret = pGlobal->RBTCTdlg.OpenClamp();
-				if (!ret)
-				{
-					ret = pGlobal->RBTCTdlg.OpenClamp();
-				}
-				slen.Format(_T("%f"), 0 - pGlobal->RBTCTdlg.dbGetProDis);
-				ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
-				if (!ret || bCycleStop)
+				ret = UW_ReMoveANDScanCode_Process();
+				if (ret != 0)
 				{
 					return 1;
 				}
-				////////////////IO夹爪夹紧开始//////////////////////////
-				Sleep(100);//此处可以添加夹料IO处理
-				ret = pGlobal->RBTCTdlg.CloseClamp();
-				if (!ret)
-				{
-					ret = pGlobal->RBTCTdlg.CloseClamp();
-				}
-				if (!ret || bCycleStop)
-				{
-					return 1;
-				}
-				////////////////IO夹爪夹紧结束//////////////////////////
-				slen.Format(_T("%f"), pGlobal->RBTCTdlg.dbGetProDis);
-				ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
-
-				//pGlobal->AddToErrorList(_T("夹爪未成功取料"));
-				//return 1;
 			}
+			break;
+		default:
+			break;
 		}
-		/////////////////////判断夹爪是否取料////////////////
-		pGlobal->AddToRunList(_T("取料成功"));
-		Sleep(100);
-		/////*****************3、中转位置*************////////////////
-		if (true == pGlobal->RBTCTdlg.bNeedTransPos)//是否启用中转位置
-		{
-			/////*****************3.1、中转放料*************////////////////
-			pGlobal->AddToRunList(_T("--------3.1、前往中转位置放料"));
+	}
+	
+	/////******此处添加扫码处理**********************////////////////
+	/////*********************************************////////////////
 
-			ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sMidTransPos, 100);
-			if (!ret || bCycleStop)
-			{
-				return 1;
-			}
-			Sleep(100);
+	/////*****************3、中转位置，目前已确认，暂时不需要中转位置*************////////////////
+	/////*****************4、放料位放料*************////////////////
 
-			ret = pGlobal->RBTCTdlg.MoveToPostion(Approch_L, sMidTransPos, 0 - pGlobal->RBTCTdlg.dbGetProDis - 10);//要比取料高度高个10，防止撞到料盒
-																												   //slen.Format(_T("%f"), 0 - pGlobal->RBTCTdlg.dbGetProDis - 10);
-																												   //ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
-			if (!ret || bCycleStop)
-			{
-				return 1;
-			}
-			////////////////IO夹松开紧开始//////////////////////////
-			Sleep(100);//此处可以添加夹料IO处理
-			ret = pGlobal->RBTCTdlg.OpenClamp();
-			if (!ret)
-			{
-				ret = pGlobal->RBTCTdlg.OpenClamp();
-			}
-			if (!ret || bCycleStop)
-			{
-				return 1;
-			}
-			////////////////IO夹爪松开结束//////////////////////////
+		//取料位置上升
+	pGlobal->AddToRunList(_T("--------4.1、出库---升高到安全位"));
+	//slen.Format(_T("%f"), 10 - pGlobal->RBTCTdlg.dbGetProDis);
+	slen.Format(_T("%f"), 10 - pGlobal->RBTCTdlg.dbPutProDis + pGlobal->RBTCTdlg.dbGetProDis - pGlobal->RBTCTdlg.dbGetPutDownDis);
+	ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);		
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	//移动到放料位置
+	pGlobal->AddToRunList(_T("--------4.2、前往定位后第") + str + _T("个放料位置放料"));
+	pGlobal->iRbtStatue = RbtPut;
+	ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunPutPos, 100);
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	//放料位置下降
+	slen.Format(_T("%f"), 10 - pGlobal->RBTCTdlg.dbGetProDis + pGlobal->RBTCTdlg.dbGetPutDownDis);
+	ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
 
-			pGlobal->AddToRunList(_T("中转位置放料成功"));
-			Sleep(100);
-			/////*****************3.2、中转取料*************////////////////
-			pGlobal->AddToRunList(_T("--------3.2、前往中转位置取料"));
-
-			ret = pGlobal->RBTCTdlg.MoveToPostion(Approch_L, sMidTransPos, 0 - pGlobal->RBTCTdlg.dbGetProDis - 83);
-			//slen.Format(_T("%f"), 0 - pGlobal->RBTCTdlg.dbGetProDis - 83);
-			//ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
-			if (!ret || bCycleStop)
-			{
-				return 1;
-			}
-			////////////////IO夹爪夹紧开始//////////////////////////
-			Sleep(100);//此处可以添加夹料IO处理
-			ret = pGlobal->RBTCTdlg.CloseClamp();
-			if (!ret)
-			{
-				ret = pGlobal->RBTCTdlg.CloseClamp();
-			}
-			if (!ret || bCycleStop)
-			{
-				return 1;
-			}
-			////////////////IO夹爪夹紧结束//////////////////////////
-			ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sMidTransPos, 100);
-			if (!ret || bCycleStop)
-			{
-				return 1;
-			}
-			/////////////////////判断夹爪是否取料////////////////
-			if (true == bVisionCon)//旋转视觉返回的旋转角度
-			{
-				if (0 == pGlobal->Visiondlg.bSuccessGet())
-				{
-					//如果没有取料成功，那就再夹一次；
-					ret = pGlobal->RBTCTdlg.OpenClamp();
-					if (!ret)
-					{
-						ret = pGlobal->RBTCTdlg.OpenClamp();
-					}
-					slen.Format(_T("%f"), 0 - pGlobal->RBTCTdlg.dbGetProDis);
-					ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
-					if (!ret || bCycleStop)
-					{
-						return 1;
-					}
-					////////////////IO夹爪夹紧开始//////////////////////////
-					Sleep(100);//此处可以添加夹料IO处理
-					ret = pGlobal->RBTCTdlg.CloseClamp();
-					if (!ret)
-					{
-						ret = pGlobal->RBTCTdlg.CloseClamp();
-					}
-					if (!ret || bCycleStop)
-					{
-						return 1;
-					}
-					////////////////IO夹爪夹紧结束//////////////////////////
-					slen.Format(_T("%f"), pGlobal->RBTCTdlg.dbGetProDis);
-					ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
-					//pGlobal->AddToErrorList(_T("夹爪未成功取料"));
-					//return 1;
-				}
-			}
-			/////////////////////判断夹爪是否取料////////////////
-			pGlobal->AddToRunList(_T("中转位置取料成功"));
-			Sleep(100);
-		}
-		/////*****************4、放料位放料*************////////////////
-		pGlobal->AddToRunList(_T("--------4、前往定位后第") + str + _T("个放料位置放料"));
-		pGlobal->iRbtStatue = RbtPut;
-		ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunPutPos, 100);
-		if (!ret || bCycleStop)
-		{
-			return 1;
-		}
-		Sleep(100);
-		if (true == bVisionCon)//旋转视觉返回的旋转角度
-		{
-			ret = pGlobal->RBTCTdlg.SingleAxisMove(Axis_6_RZ, sPutAngle);
-			if (!ret || bCycleStop)
-			{
-				return 1;
-			}
-		}
-
-		slen.Format(_T("%f"), 10 - pGlobal->RBTCTdlg.dbGetProDis);
-		ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
-		//ret = pGlobal->RBTCTdlg.MoveToPostion(Approch_L, sRunPutPos, 10 - pGlobal->RBTCTdlg.dbGetProDis);//要比取料高度高个10，防止撞到料盒
-		if (!ret || bCycleStop)
-		{
-			return 1;
-		}
-		////////////////IO夹松开紧开始//////////////////////////
-		Sleep(100);//此处可以添加夹料IO处理
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	////////////////IO夹松开紧开始//////////////////////////
+	Sleep(50);//此处可以添加夹料IO处理
+	ret = pGlobal->RBTCTdlg.OpenClamp();
+	if (!ret)
+	{
 		ret = pGlobal->RBTCTdlg.OpenClamp();
-		if (!ret)
+	}
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	////////////////IO夹爪松开结束//////////////////////////
+	slen.Format(_T("%f"), pGlobal->RBTCTdlg.dbGetProDis - 10 - pGlobal->RBTCTdlg.dbGetPutDownDis);
+	ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	pGlobal->AddToRunList(_T("下料位置放料成功"));
+	Sleep(20);
+
+	return 0;
+}
+
+int CJIMIDlg::UW_ScanCode_Process()
+{
+	ResetEvent(pGlobal->Handle_CSRetData[0]);
+	ResetEvent(pGlobal->Handle_CSRetData[1]);
+	ResetEvent(pGlobal->Handle_CSRetData[2]);
+	pGlobal->CSSocekt.ReadCode();//发送扫码命令
+	DWORD  dwReturn = WaitForMultipleObjects(3, pGlobal->Handle_CSRetData, FALSE, 4000);//4s的到位超时
+	if (dwReturn - WAIT_OBJECT_0 == 0)
+	{
+		pGlobal->AddToRunList(_T("扫码枪获取格式正确的二维码！！！"));
+		if (1 == UWdlg.itype)//1出库2盘点
 		{
-			ret = pGlobal->RBTCTdlg.OpenClamp();
+			//出库时执行以下数据操作，盘点不用
+			if (pGlobal->CSSocekt.sSCid == pGlobal->UWdlg.sMaterialId)
+			{
+				if (pGlobal->CSSocekt.iSCnum == pGlobal->UWdlg.iQuantity)
+				{
+					pGlobal->UWdlg.iErrorCode = 0;
+				}
+				else
+				{
+					pGlobal->AddToErrorList(_T("扫到的码与UW的物料编码数量异常！！！"));
+					pGlobal->UWdlg.iErrorCode = 4;
+				}
+			}
+			else
+			{
+				pGlobal->AddToErrorList(_T("扫到的码与UW的物料编码--匹配异常！！！"));
+				pGlobal->UWdlg.iErrorCode = 2;
+			}
+		}		
+		ResetEvent(pGlobal->Handle_CSRetData[0]);
+		return 0;
+	}
+	else if (dwReturn - WAIT_OBJECT_0 == 1)
+	{
+		ResetEvent(pGlobal->Handle_CSRetData[1]);
+		return 1;
+	}
+	else if (dwReturn - WAIT_OBJECT_0 == 2)
+	{
+		ResetEvent(pGlobal->Handle_CSRetData[1]);
+		return 2;
+	}
+	else if (WAIT_TIMEOUT == dwReturn)
+	{
+		pGlobal->CSSocekt.StopReadCode();//停止发送扫码命令
+		pGlobal->AddToErrorList(_T("扫码枪4s超时,未扫到规格内的码"));
+		ResetEvent(pGlobal->Handle_CSRetData[0]);
+		ResetEvent(pGlobal->Handle_CSRetData[1]);
+		ResetEvent(pGlobal->Handle_CSRetData[2]);
+		pGlobal->UWdlg.iErrorCode = 1;
+		return 3;
+	}
+}
+
+int CJIMIDlg::UW_ReMoveANDScanCode_Process()
+{
+	int ret;
+	CString slen;
+	CString str,strMSG;
+	//GetPrivateProfileString(_T("ProcessDATA"), _T("SCMovePos"), _T("7"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
+	str = _T("9");
+	strMSG = _T("#,V,2,30,@");             
+	pGlobal->MoveRbtSend(strMSG);//速度降低
+	Sleep(20);
+	//pGlobal->AddToRunList(_T("扫码不倒，需要移动的距离，文件保存数据为：") + str);
+	if (pGlobal->igetpos <41)
+	{
+		slen = _T("-")+ str;//需要移动的距离
+
+	}
+	else
+	{
+		slen = str;//需要移动的距离
+	}	
+	ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_1_X, slen);//移动一个位置，让料盘下去
+	//pGlobal->AddToRunList(_T("扫码不倒，需要移动的距离为：") + str);
+
+	//这样料盘就发生了旋转，再下去夹料，再拍
+	slen.Format(_T("%f"), 0-pGlobal->RBTCTdlg.dbPutProDis);
+	ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);//下降过程擦着边框会导致料盘旋转
+	Sleep(300);
+	if (pGlobal->igetpos <41)
+	{
+		slen = str;//需要移动的距离
+	}
+	else
+	{
+		slen = _T("-") + str;//需要移动的距离
+	}
+	ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_1_X, slen);//移动一个位置，让料盘下去
+
+	slen.Format(_T("%f"), pGlobal->RBTCTdlg.dbPutProDis);//这个地方不需要完全起来
+	ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
+	//到位后再重新扫码
+	Sleep(100);
+	strMSG = _T("#,V,2,") + pGlobal->RBTCTdlg.CurSpeed + _T(",@");
+	pGlobal->MoveRbtSend(strMSG);//速度恢复
+	/////****   此处添加扫码处理             *********////////////////
+	str.ReleaseBuffer();
+	ret = UW_ScanCode_Process();
+	switch (ret)
+	{
+	case 0://扫码正常
+		break;
+	case 1://1为物料总数量异常
+		return 1;
+		break;
+	case 2://2为未扫码到与UW匹配的物料ID
+		return 1;
+		break;
+	case 3://超时，不再做进一步的处理
+		return 1;
+	default:
+		break;
+	}
+	return 0;
+	
+}
+
+int CJIMIDlg::BackToStartPos()
+{
+	int ret;
+	CString startPos[7];
+	for (int i = 0; i < 7; i++)
+	{
+		startPos[i] = pGlobal->RBTCTdlg.sFunctionPos[0][i];//中转点位用固定点位
+	}
+	ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, startPos, 100);
+	return ret;
+}
+
+int CJIMIDlg::UW_OUT_Process()
+{
+	DWORD dwState;
+	int iret;
+	CString str;
+
+	pGlobal->RBTCTdlg.iWorkType = 0;
+	ResetEvent(pGlobal->Handle_UWRetData_ack);
+	ResetEvent(pGlobal->Handle_UWRetData_material_position_info);
+	pGlobal->UWdlg.UW_AskPostion_Send();
+	pGlobal->AddToRunList(_T("-----step2.1、机器人向UW请求取放位置与料盘编码,等待位置ACK..... -----"));
+	dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_ack, 3000);
+	if (bCycleStop)
+	{
+		return 1;
+	}
+	if (dwState - WAIT_OBJECT_0 == 0)
+	{
+		ResetEvent(pGlobal->Handle_UWRetData_ack);
+		pGlobal->AddToRunList(_T("-----Step2.2.:收到UW的位置ack信号-----"));
+	}
+	else if (WAIT_TIMEOUT == dwState)
+	{
+		ResetEvent(pGlobal->Handle_UWRetData_ack);
+		pGlobal->AddToErrorList(_T("-----Step2.2.:等到UW_ack信号3s超时"));
+		return 1;
+	}
+
+	pGlobal->AddToRunList(_T("-----step2.3、机器人收倒UW 位置ACK，继续等待位置信息..... -----"));
+	dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_material_position_info, INFINITE);
+	if (bCycleStop)
+	{
+		return 1;
+	}
+	if (dwState - WAIT_OBJECT_0 == 0)
+	{
+		ResetEvent(pGlobal->Handle_UWRetData_material_position_info);
+		pGlobal->AddToRunList(_T("-----Step2.4.:收到UW的位置与料盘编码信息!!!!，回复UW ack命令-----"));
+		//pGlobal->UWdlg.UW_Ack_Send();
+		if (_T("null") != UWdlg.sMaterialId)
+		{
+			iret = UW_Num_Code_Check_Process();
+			if (0 == iret)
+			{
+				if (0 == pGlobal->UWdlg.iErrorCode)
+				{
+					//扫码成功，把码上传
+					pGlobal->UWdlg.UW_ScanMaterilaInfo_Send(pGlobal->UWdlg.sMaterialId, pGlobal->UWdlg.iQuantity);
+				}
+				else
+				{
+					str.Format(_T("%d"), pGlobal->UWdlg.iErrorCode);
+					pGlobal->AddToRunList(_T("-----Step3.1.:收机器人或者视觉动作异常，异常码为:") + str);
+					pGlobal->UWdlg.UW_ScanMaterilaInfo_Error_Send(pGlobal->UWdlg.sMaterialId, pGlobal->UWdlg.iErrorCode);//ierrorCode视情况而定
+					return 1;//异常码得停下来 由人工处理后继续
+				}
+			}
+			else
+			{
+				if (pGlobal->UWdlg.iErrorCode == 0)
+				{
+					pGlobal->UWdlg.iErrorCode = 5;
+				}
+				str.Format(_T("%d"), pGlobal->UWdlg.iErrorCode);
+				if (pGlobal->UWdlg.iErrorCode == 5)
+				{
+					pGlobal->AddToRunList(_T("-----Step3.1.:收机器人或者视觉动作异常，异常码为:") + str);
+					pGlobal->AddToErrorList(_T("-----Step3.1.:收机器人或者视觉动作异常，异常码为:") + str);
+
+				}
+				else
+				{
+					pGlobal->AddToRunList(_T("-----Step3.1.:收扫码结果或者UW数据异常，异常码为:") + str);
+					pGlobal->AddToErrorList(_T("-----Step3.1.:收扫码结果或者UW数据异常，异常码为:") + str);
+				}
+
+				pGlobal->UWdlg.UW_ScanMaterilaInfo_Error_Send(pGlobal->UWdlg.sMaterialId, pGlobal->UWdlg.iErrorCode);//ierrorCode视情况而定
+				return 1;//异常码得停下来 由人工处理后继续
+			}
+			////等待UW回复ACK信号----
+			dwState = WaitForSingleObject(pGlobal->Handle_UWRetData_ack, 3000);
+			if (bCycleStop)
+			{
+				return 1;
+			}
+			if (dwState - WAIT_OBJECT_0 == 0)
+			{
+				ResetEvent(pGlobal->Handle_UWRetData_ack);
+				pGlobal->AddToRunList(_T("-----Step3.1.:收到UW的ack信号-----"));
+			}
+			else if (WAIT_TIMEOUT == dwState)
+			{
+				ResetEvent(pGlobal->Handle_UWRetData_ack);
+				pGlobal->AddToErrorList(_T("-----Step3.1.:等到UW_ack出库信号3s超时"));
+				return 1;
+			}
 		}
+		else
+		{
+			BackToStartPos();
+			pGlobal->UWdlg.bNeedReady = 1;
+			WritePrivateProfileString(_T("ProcessDATA"), _T("NeedReady"), _T("1"), _T(".\\SystemInfo.ini"));
+		}
+	}
+	else if (WAIT_TIMEOUT == dwState)
+	{
+		ResetEvent(pGlobal->Handle_UWRetData_material_position_info);
+		pGlobal->AddToErrorList(_T("-----Step2.2.:等到UW的位置与料盘编码信息超时"));
+		return 1;
+	}
+	return 0;
+}
+
+int CJIMIDlg::UW_CheckALL_Process()
+{
+	int iCardNum;
+	int ixpos, iypos,iendflag;
+	CString sUWCSid;
+	int sUWCSnum;
+	bool bSCFlag;//扫码正常与否的标志位
+	int ret;
+	ret = BackToStartPos();
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	for (iCardNum = 0; iCardNum < 40; iCardNum++)
+	{
+		if (iUWetResult[iCardNum] != 0)
+		{
+			continue;
+		}
+		////////位置坐标转换////////////
+		if (iCardNum<20)
+		{
+			ixpos = iCardNum;
+			iypos = 0;
+		}
+		else
+		{
+			ixpos = iCardNum - 20;
+			iypos = 1;
+		}
+		///////////结束标志位置判断
+		if (iCardNum == 39)
+		{
+			iendflag = 1;
+		}
+		else
+		{
+			iendflag = 0;
+		}
+		sUWCSnum = 0;
+		sUWCSid = _T("00000");
+
+		switch (pGlobal->Visiondlg.iVisGetResult[iCardNum]) ////1、有料可夹；2、有料不可夹；3、无料；
+		{
+		case Vis_True:
+			ret = UW_GoCheckId(iCardNum, bSCFlag);
+			if (ret ==1)
+			{
+				pGlobal->AddToErrorList(_T("机械臂动作异常"));
+				return 1;
+			}
+			if (bSCFlag == true)
+			{
+				pGlobal->UWdlg.UW_ReadMessage_Send(pGlobal->CSSocekt.sSCid, pGlobal->CSSocekt.iSCnum, ixpos, iypos, UW_True, iendflag);
+				iUWetResult[iCardNum] = UW_True;
+			}
+			else
+			{
+				pGlobal->UWdlg.UW_ReadMessage_Send(sUWCSid, sUWCSnum, ixpos, iypos, UW_False, iendflag);
+				iUWetResult[iCardNum] = UW_False;
+			}
+			break;
+		case Vis_False:
+			pGlobal->UWdlg.UW_ReadMessage_Send(sUWCSid,sUWCSnum, ixpos,iypos,UW_Error, iendflag);
+			iUWetResult[iCardNum] = UW_Error;
+			break;
+		case Vis_Null:
+			pGlobal->UWdlg.UW_ReadMessage_Send(sUWCSid, sUWCSnum, ixpos, iypos, UW_Null, iendflag);
+			iUWetResult[iCardNum] = UW_Null;
+			break;
+		default:
+			break;
+		}
+	}
+	pGlobal->UWdlg.bNeedReady = 1;
+	WritePrivateProfileString(_T("ProcessDATA"), _T("NeedReady"), _T("1"), _T(".\\SystemInfo.ini"));
+	::PostMessage(this->m_hWnd, WM_UWUpdataBTN, NULL, NULL);
+	::PostMessage(this->m_hWnd, WM_UWNumLog, NULL, NULL);
+	return 0;
+}
+
+int CJIMIDlg::UW_GoCheckId(int icheckpos,bool &bGetId)
+{
+	CString sMsg, str;
+	CString sRunGetPos[7];
+	CString sRunPutPos[7];
+	CString sMidTransPos[7];
+	CString sGetAngle = _T("0");
+	CString sPutAngle = _T("0");
+	CString slen, strMSG;
+	int ret;//位置返回值
+	bool bret;
+	int i;//for循环用
+	////////////////IO夹松开紧开始//////////////////////////
+	ret = pGlobal->RBTCTdlg.OpenClamp();
+	if (!ret)
+	{
+		ret = pGlobal->RBTCTdlg.OpenClamp();
+	}
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	////////////////IO夹爪松开结束//////////////////////////
+
+	str.Format(_T("--盘点---1.1 开始第%d个位置盘点"), icheckpos);
+	pGlobal->AddToRunList(str);
+	////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////
+	for (i = 0; i < 7; i++)
+	{
+		sMidTransPos[i] = pGlobal->RBTCTdlg.sFunctionPos[0][i];//中转点位用固定点位
+		sRunGetPos[i] = pGlobal->Visiondlg.sVisGetPos[icheckpos][i];//定好视觉更新后的取料位置
+		sRunPutPos[i] = sRunGetPos[i];
+	}
+	/////////基于视觉定位高度，取放料要比它稍微低一点点，因此需要z方向，下降当前高度；//////////
+	double dbdata = _ttof(sRunGetPos[2]) - pGlobal->RBTCTdlg.dbGetPutDownDis;
+	sRunGetPos[2].Format(_T("%f"), dbdata);
+	/////////////////////////////////////////////////////
+	sGetAngle = pGlobal->Visiondlg.sVisGetAngle[icheckpos];
+	sPutAngle = sGetAngle;//取放料同一个位置
+	/////*****************3、取料位取料*************////////////////
+	pGlobal->AddToRunList(_T("--盘点---1.2 机械臂开始取料"));
+	pGlobal->iRbtStatue = RbtGet;
+	ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunGetPos, 100);
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	Sleep(50);
+	if (true == bVisionCon)//旋转视觉返回的旋转角度
+	{
+		ret = pGlobal->RBTCTdlg.SingleAxisMove(Axis_6_RZ, sGetAngle);
 		if (!ret || bCycleStop)
 		{
 			return 1;
 		}
-		////////////////IO夹爪松开结束//////////////////////////
-		slen.Format(_T("%f"), pGlobal->RBTCTdlg.dbGetProDis - 10);
-		ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
-		//ret = pGlobal->RBTCTdlg.MoveToPostion(Move_L, sRunPutPos, 100);
+	}
+	/////////////////速度减慢////////////
+	Sleep(30);
+	int ispeed = _tstoi(pGlobal->RBTCTdlg.CurSpeed);
+	ispeed = ispeed*3/4;
+	CString sspeed;
+	sspeed.Format(_T("%d"), ispeed);
+	strMSG = _T("#,V,2,") + sspeed + _T(",@");
+	pGlobal->MoveRbtSend(strMSG);//速度减半
+	Sleep(50);
+	/////////////////速度减慢////////////
+	/////////////////下降////////////
+	slen.Format(_T("%f"), 0 - pGlobal->RBTCTdlg.dbGetProDis + pGlobal->RBTCTdlg.dbGetPutDownDis);
+	ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	/////////////////速度恢复////////////
+	Sleep(50);
+	strMSG = _T("#,V,2,") + pGlobal->RBTCTdlg.CurSpeed + _T(",@");
+	pGlobal->MoveRbtSend(strMSG);//速度恢复
+	/////////////////速度减慢////////////								
+	Sleep(10);//此处可以添加夹料IO处理
+	ret = pGlobal->RBTCTdlg.CloseClamp();
+	if (!ret)
+	{
+		ret = pGlobal->RBTCTdlg.CloseClamp();
+	}
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	////////////////IO夹爪夹紧结束//////////////////////////
+	slen.Format(_T("%f"), pGlobal->RBTCTdlg.dbPutProDis);//这个地方不需要完全起来
+	ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	pGlobal->AddToRunList(_T("--盘点---1.3 机械臂取料成功"));
+	Sleep(10);
+
+	/////*********************************************////////////////		
+	/////****   此处添加扫码处理             *********////////////////
+	bGetId = true;//默认扫到码，后面如果真的没有扫到码在判断为错误
+	pGlobal->AddToRunList(_T("--盘点---1.4 机械臂开始扫码"));
+	{
+		ret = UW_ScanCode_Process();
+		switch (ret)
+		{
+		case 0://扫码正常
+			break;
+		case 1://1为物料总数量异常
+			break;
+		case 2://2为未扫码到与UW匹配的物料I
+			break;
+		case 3://扫码超时，移动料盘位置再扫一次则再扫一次
+			ret = UW_ReMoveANDScanCode_Process();
+			if (ret != 0)
+			{
+				ret = UW_ReMoveANDScanCode_Process();
+				if (ret != 0)
+				{
+					bGetId = false;//扫码失败标志为
+				}
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	/////******此处添加扫码处理**********************////////////////
+	/////*****************4、放料位放料*************////////////////
+	pGlobal->AddToRunList(_T("--盘点---1.5 机械臂开始放料"));
+	slen.Format(_T("%f"), 10 - pGlobal->RBTCTdlg.dbPutProDis);//可用于扫码盘点
+	ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	////////////////IO夹松开紧开始//////////////////////////
+	Sleep(50);//此处可以添加夹料IO处理
+	ret = pGlobal->RBTCTdlg.OpenClamp();
+	if (!ret)
+	{
+		ret = pGlobal->RBTCTdlg.OpenClamp();
+	}
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	////////////////IO夹爪松开结束//////////////////////////
+	slen.Format(_T("%f"), pGlobal->RBTCTdlg.dbGetProDis - 10 - pGlobal->RBTCTdlg.dbGetPutDownDis);
+	ret = pGlobal->RBTCTdlg.X_YSpaceAxisMove(Axis_3_Z, slen);
+	if (!ret || bCycleStop)
+	{
+		return 1;
+	}
+	pGlobal->AddToRunList(_T("--盘点---1.6 机械臂开始下料成功"));
+	if (39 == icheckpos) //最后一个位置
+	{
+		ret = BackToStartPos();
 		if (!ret || bCycleStop)
 		{
 			return 1;
 		}
-		pGlobal->AddToRunList(_T("下料位置放料成功"));
-		Sleep(100);
 	}
 	return 0;
 }

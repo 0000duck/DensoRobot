@@ -12,8 +12,8 @@ public:
 	virtual void OnConnect(int nErrorCode);
 
 	BOOL m_bConnected;	 // «∑Ò¡¨Ω”
-	char cRecvData[255];
-	char cSendData[255];
+	char cRecvData[8192];
+	char cSendData[8192];
 	UINT iSendLen;
 
 public:

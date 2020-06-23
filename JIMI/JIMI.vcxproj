@@ -195,9 +195,11 @@
     <ClInclude Include="AutoUIdlg.h" />
     <ClInclude Include="CircleButton.h" />
     <ClInclude Include="ClientSocket_BaseRBT.h" />
+    <ClInclude Include="ClientSocket_CodeScan.h" />
     <ClInclude Include="ClientSocket_Robot.h" />
     <ClInclude Include="ClientSocket_UW.h" />
     <ClInclude Include="ClientSocket_VisionMark.h" />
+    <ClInclude Include="CodeScanTestdlg.h" />
     <ClInclude Include="DBConfig.h" />
     <ClInclude Include="ForStruct.h" />
     <ClInclude Include="JIMI.h" />
@@ -227,9 +229,11 @@
     <ClCompile Include="AutoUIdlg.cpp" />
     <ClCompile Include="CircleButton.cpp" />
     <ClCompile Include="ClientSocket_BaseRBT.cpp" />
+    <ClCompile Include="ClientSocket_CodeScan.cpp" />
     <ClCompile Include="ClientSocket_Robot.cpp" />
     <ClCompile Include="ClientSocket_UW.cpp" />
     <ClCompile Include="ClientSocket_VisionMark.cpp" />
+    <ClCompile Include="CodeScanTestdlg.cpp" />
     <ClCompile Include="DBConfig.cpp" />
     <ClCompile Include="JIMI.cpp" />
     <ClCompile Include="JIMIDlg.cpp" />

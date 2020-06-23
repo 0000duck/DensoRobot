@@ -41,7 +41,9 @@ public:
 	void Brown();
 	void Gray();
 	void GreenOrRed(int iret);
-	void ChangeColor(int ColorNo);
+	
+	void VisChangeColor(int iret);
+	void UWChangeColor(int iret);
 	void SetFont(int TextSize, TCHAR* TestName);
 	void SetBkColor(COLORREF rgb);
 	void SetTextColor(COLORREF rgb);

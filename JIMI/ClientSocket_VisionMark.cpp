@@ -25,8 +25,9 @@ ClientSocket_VisionMark::~ClientSocket_VisionMark()
 void ClientSocket_VisionMark::OnReceive(int nErrorCode)
 {
 	// TODO: 在此添加专用代码和/或调用基类
-	memset(cRecvData, 0, 255);
-	int iLen = Receive((void*)cRecvData, 255);
+	memset(cRecvData, 0, sizeof(cSendData));
+	int iLen = Receive((void*)cRecvData, sizeof(cSendData));
+	AsyncSelect(FD_READ);
 	if (iLen > 0)
 	{
 		DataProcess();
@@ -61,7 +62,7 @@ void ClientSocket_VisionMark::OnConnect(int nErrorCode)
 	{
 		bAlive = TRUE;
 		pGlobal->AddToRunList(_T("VsionSocket连接成功"));
-		//AsyncSelect(FD_READ);  //提请一个"读"的网络事件，准备接收
+		AsyncSelect(FD_READ);  //提请一个"读"的网络事件，准备接收
 	}
 	else
 	{
@@ -108,7 +109,7 @@ bool ClientSocket_VisionMark::SendMSG(CString str)
 	smsg = str;//\r\n
 
 	iSendLen = smsg.GetLength();
-	memset(cSendData, 0, 256);
+	memset(cSendData, 0, sizeof(cSendData));
 
 	strcpy(cSendData, T2A(smsg));
 	if (TRUE == m_bConnected)
@@ -118,7 +119,7 @@ bool ClientSocket_VisionMark::SendMSG(CString str)
 	}
 	else
 	{
-		pGlobal->AddToErrorList(_T("基础服务器尚未连接，发送无效"));
+		pGlobal->AddToErrorList(_T("视觉服务器尚未连接，发送无效"));
 	}
 
 	

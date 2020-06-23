@@ -11,11 +11,13 @@
 #include "RobotControldlg.h"
 #include "VisionTestdlg.h"
 #include "UWTestdlg.h"
-#include "AutoUIdlg.h"
 #include "ClientSocket_Robot.h"
 #include "ClientSocket_BaseRBT.h"
 #include "ClientSocket_VisionMark.h"
 #include "ClientSocket_UW.h"
+#include "ClientSocket_CodeScan.h"
+#include "CodeScanTestdlg.h"
+#include "AutoUIdlg.h"
 #include <map>
 
 #include "afxwin.h"
@@ -63,6 +65,7 @@ public:
 	ClientSocket_BaseRBT BaseRbtSocket;
 	ClientSocket_VisionMark VisMarkSocekt;
 	ClientSocket_UW UWSocekt;
+	ClientSocket_CodeScan CSSocekt;
 	bool bVisionCon;//是否启用视觉
 	bool bUWCon;//是否启用视觉
 	//串口模块
@@ -87,14 +90,30 @@ public:
 	static UINT InitialALLThread(LPVOID pParam);
 	static UINT AutoRunThread(LPVOID pParam);
 	static UINT CheckRbtMoveSocketAliveThread(LPVOID pParam);
+
 	int UW_OFF_MainRunProgram();//return 1234567分别对应相应点位，则显示到位异常,不带UW跑的
-	int UW_ON_MainRunProgram();//return 1234567分别对应相应点位，则显示到位异常,带UW跑的
-	int UW_ON_MainRunProgramAsFolow();//return 1234567分别对应相应点位，必须先出库再入库
+	int UW_ON_MainRunProgram();//20191225 wade add 仓库盘点用
+
+
+	int UW_OUT_Process();//2.0.0新版本出库函数 wade20200427
+	int UW_CheckALL_Process();//2.0.0新版本盘点函数 wade20200427
+	int UW_GoCheckId(int icheckpos, bool &bGetId);//2.0.0新版本wade20200427 前往刀卡当前位置进行扫码动作
+	int iUWetResult[40];////1、扫码正常；2、扫码异常；3、有料不可夹；4、无料；
+	bool bmark;//重启软件或者，新来料都要进行定位
+	
 	bool InitialALL();//return 1234567分别对应相应点位，则显示到位异常
 	bool InitialResetevent();
 	int iRbtStatue;//机器人状态，0123456
 
-	int UW_OUT_IN_ROBOT_Process();//UW出库机械臂取料流程
+	int UW_Num_Code_Check_Process();//2.0.0只能做出库用
+	int UW_ScanCode_Process();//uw的扫码动作，可能一次不成要扫两次;//0为正常数据返回，1为物料总数量异常，2为未扫码到与UW匹配的物料ID,3为超时
+	int UW_ReMoveANDScanCode_Process();//第一次没有扫到码，然后
+	int BackToStartPos();//让机械臂回到原点
+	CString sUWCmdCode;//UW发过来的出库入库的代号，只有出库入库需要，作为点位判断用
+	int iStartPos;//此次从第几个位置开始夹，适用于异常情况中断情况，继续上次的动作进行夹取
+	int igetpos;//0-80个位置
+	int iputpos;
+	int iCSTgetpos;//刀卡位置0-39
 
 	CString m_PCName, m_PCIP;
 	void FontInit();//初始化字体
@@ -114,6 +133,7 @@ public:
 	void BaseRbtSend(CString str);//线程内部用函数，处理线程里面无法用send的问题
 	void MoveRbtSend(CString str);//线程内部用函数，处理线程里面无法用send的问题
 	void VisionSend(CString str);//线程内部用函数，处理线程里面无法用send的问题
+	void VisBtnUpdata();//视觉刷新刀卡状态按钮函数
 	//初始化事件
 	void EventInitial();
 
@@ -127,8 +147,9 @@ public:
 	void initMainTab();
 	RobotControldlg RBTCTdlg;
 	VisionTestdlg Visiondlg;
-	AutoUIdlg Autouidlg;
 	UWTestdlg UWdlg;
+	CodeScanTestdlg CSdlg;
+	AutoUIdlg Autouidlg;
 
 protected:
 	afx_msg LRESULT OnRunlog(WPARAM wParam, LPARAM lParam);
@@ -136,6 +157,10 @@ protected:
 	afx_msg LRESULT OnBaseRbtSend(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnMoveRbtSend(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnVisionSend(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnVisUpdataStatue(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnUWUpdataStatue(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnVisLogStatue(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnUWLogStatue(WPARAM wParam, LPARAM lParam);
 public:
 	afx_msg void OnBnClickedBtnClearerror();
 	CComboBox c_PortCom;
@@ -168,8 +193,11 @@ public:
 	HANDLE Handle_UWRetData_out;
 	HANDLE Handle_UWRetData_ack;
 	HANDLE Handle_UWRetData_reach_in;
+	HANDLE Handle_UWRetData_forklift_reach;
+	HANDLE Handle_UWRetData_material_position_info;
+	HANDLE Handle_CSRetData[3];//0为正常数据返回，1为物料总数量异常，2为未扫码到与UW匹配的物料ID
 
-	afx_msg void OnBnClickedButtonComok2();
+	afx_msg void OnBnClickedButtonComok2();					
 	virtual BOOL DestroyWindow();
 	afx_msg void OnBnClickedBtmRunmain();
 	afx_msg void OnBnClickedBtmCyclestop();

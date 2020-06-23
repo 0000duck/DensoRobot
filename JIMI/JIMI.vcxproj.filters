@@ -108,6 +108,12 @@
     <ClInclude Include="ForStruct.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CodeScanTestdlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientSocket_CodeScan.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="JIMI.cpp">
@@ -165,6 +171,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ClientSocket_UW.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CodeScanTestdlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientSocket_CodeScan.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

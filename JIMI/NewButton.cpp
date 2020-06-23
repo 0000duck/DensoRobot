@@ -266,14 +266,31 @@ void CNewButton::GreenOrRed(int iret)
 	}
 	
 }
-void CNewButton::ChangeColor(int ColorNo)
+void CNewButton::VisChangeColor(int iret)
 {
-	if (ColorNo == 0)
+	switch (iret)
 	{
-		Red();
+	case 0:         Blank();      break;
+	case 1:         Green();      break;
+	case 2:         Red();      break;
+	case 3:         Blank();      break;
+	default:
+		break;
 	}
-	else if (ColorNo == 1)
+
+}
+
+void CNewButton::UWChangeColor(int iret)
+{
+	switch (iret)
 	{
-		Green();
+	case 0:         Blank();      break;
+	case 1:         Green();      break;
+	case 2:         Red();        break;
+	case 3:         Yellow();      break;
+	case 4:         Blank();      break;
+	default:
+		break;
 	}
+
 }

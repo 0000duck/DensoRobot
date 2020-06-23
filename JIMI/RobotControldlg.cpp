@@ -107,6 +107,8 @@ BEGIN_MESSAGE_MAP(RobotControldlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_IniClamp, &RobotControldlg::OnBnClickedBtnIniclamp)
 	ON_BN_CLICKED(IDC_BTN_SETProcessNum, &RobotControldlg::OnBnClickedBtnSetprocessnum)
 	ON_BN_CLICKED(IDC_CHECK_OpenTransPOS, &RobotControldlg::OnBnClickedCheckOpentranspos)
+	ON_BN_CLICKED(IDC_BTN_SETGETDIS2, &RobotControldlg::OnBnClickedBtnSetgetdis2)
+	ON_BN_CLICKED(IDC_BTN_SETGETPUTDIS, &RobotControldlg::OnBnClickedBtnSetgetputdis)
 END_MESSAGE_MAP()
 
 
@@ -136,11 +138,21 @@ BOOL RobotControldlg::OnInitDialog()
 	GetPrivateProfileString(_T("ProcessDATA"), _T("RbtDownDis"), _T("220"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
 	dbGetProDis = _ttof(str);
 	SetDlgItemText(IDC_EDIT_GetProDis, str);
+	GetPrivateProfileString(_T("ProcessDATA"), _T("RbtUpDis"), _T("50"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
+	dbPutProDis = _ttof(str);
+	SetDlgItemText(IDC_EDIT_PutProDis, str);
+
+	GetPrivateProfileString(_T("ProcessDATA"), _T("GetPutDownDis"), _T("20"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
+	dbGetPutDownDis = _ttof(str);
+	SetDlgItemText(IDC_EDIT_GetPutDownDis, str);
+
 	GetPrivateProfileString(_T("ProcessDATA"), _T("ProcessNum"), _T("11"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
 	iProcessNum = _ttoi(str);
 	SetDlgItemText(IDC_EDIT_ProcessNum, str);
 	GetPrivateProfileString(_T("ProcessDATA"), _T("NeedTransPos"), _T("1"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
 	iret = _ttoi(str);
+	GetPrivateProfileString(_T("ProcessDATA"), _T("WorkType"), _T("1"), str.GetBuffer(50), 50, _T(".\\SystemInfo.ini"));
+	iWorkType = _ttoi(str);
 	if (iret == 1)
 	{
 		bNeedTransPos = true;
@@ -156,9 +168,9 @@ BOOL RobotControldlg::OnInitDialog()
 	PosListIni();
 	ReadPosFromINI();
 	InsertDataPosList();
-
-	AfxBeginThread(IOUpdatdaThread, this);//
-
+	CurSpeed = _T("0");
+	pGlobal->pJimiThread[2] = AfxBeginThread(IOUpdatdaThread, this);//
+	pGlobal->pJimiThread[2]->m_bAutoDelete = TRUE;
 	return TRUE;  
 }
 
@@ -183,7 +195,7 @@ void RobotControldlg::OnBnClickedBtnIpconnect()
 
 			BaseWidgetStatue(TRUE);
 			MoveWidgetStatue(TRUE);
-			bIOUpdata = true;
+			//bIOUpdata = true;
 			//SetTimer(1, 500, NULL);
 
 		}
@@ -223,6 +235,7 @@ void RobotControldlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 			iPos = m_SlidSpeed.GetPos();
 			sPos.Format(_T("%d"), iPos);
 			SetDlgItemText(IDC_EDIT_SPEEDVIEW, sPos);
+			pGlobal->RBTCTdlg.CurSpeed = sPos;
 			pGlobal->Autouidlg.SetDlgItemText(IDC_EDIT_rbtSpeed, pGlobal->RBTCTdlg.CurSpeed);
 			strMSG = _T("#,V,2,") + sPos + _T(",@");
             bool ret = pGlobal->RbtSocket.SendMSG(strMSG);
@@ -563,15 +576,15 @@ void RobotControldlg::PosListIni()
 	{
 		if (i<20)
 		{
-			str.Format(_T("%d"), i+1);
-		    m_PosShow.InsertItem(i*2+ 1, _T("取料(出库1_")+str+_T(")"));//插入行
-		    m_PosShow.InsertItem(i*2 + 2, _T("放料(入库1_")+str+_T(")"));//插入行
+			str.Format(_T("%d"), i);
+		    m_PosShow.InsertItem(i*2+ 1, _T("取料(出库0_")+str+_T(")"));//插入行
+		    m_PosShow.InsertItem(i*2 + 2, _T("放料(入库0_")+str+_T(")"));//插入行
 		}
 		else
 		{
-			str.Format(_T("%d"), i - 20 + 1);
-			m_PosShow.InsertItem(i * 2 + 1, _T("取料(出库2_") + str + _T(")"));//插入行
-			m_PosShow.InsertItem(i * 2 + 2, _T("放料(入库2_") + str + _T(")"));//插入行
+			str.Format(_T("%d"), i - 20);
+			m_PosShow.InsertItem(i * 2 + 1, _T("取料(出库1_") + str + _T(")"));//插入行
+			m_PosShow.InsertItem(i * 2 + 2, _T("放料(入库1_") + str + _T(")"));//插入行
 		}		
 	}
 }
@@ -696,7 +709,7 @@ UINT RobotControldlg::IOUpdatdaThread(LPVOID lparam)
 			RBTdlg->GetIOSetIOBtm();
 
 		}
-		Sleep(1000);
+		Sleep(350);
 	}
 	return 1;
 }
@@ -772,13 +785,13 @@ int RobotControldlg::MoveToPostion(int MovModle, CString sPOS[7], double dbLen)
 	case Depart_P:	  sMSG = _T("#,MOV,3,") + str;	break;
 	case Move_P:	  sMSG = _T("#,MOV,4,") + str;  break;
 	case Move_L:	  sMSG = _T("#,MOV,5,") + str;  break;
-	default:		  return 0;		                break;
+	default:		return 0;		break;
 	}
 	//bool ret = pGlobal->RbtSocket.SendMSG(sMSG);
 	pGlobal->MoveRbtSend(sMSG);
 	ResetEvent(pGlobal->Handle_FinishPOS[0]);
 	ResetEvent(pGlobal->Handle_FinishPOS[1]);
-	DWORD  dwReturn = WaitForMultipleObjects(2,pGlobal->Handle_FinishPOS, FALSE,20000);//20s的到位超时
+	DWORD  dwReturn = WaitForMultipleObjects(2,pGlobal->Handle_FinishPOS, FALSE,15000);//20s的到位超时
 	if (dwReturn - WAIT_OBJECT_0 == 0)
 	{
 		pGlobal->AddToRunList(_T("机器人到指定点位"));
@@ -798,6 +811,7 @@ int RobotControldlg::MoveToPostion(int MovModle, CString sPOS[7], double dbLen)
 		ResetEvent(pGlobal->Handle_FinishPOS[1]);
 		return 0;
 	}
+	return 0;
 }
 
 int RobotControldlg::SingleAxisMove(int iAxis, CString sAngle)
@@ -811,13 +825,13 @@ int RobotControldlg::SingleAxisMove(int iAxis, CString sAngle)
 	case Axis_4_RX:	  sMSG = _T("#,S,4,") + sAngle + _T(",@");  break;
 	case Axis_5_RY:	  sMSG = _T("#,S,5,") + sAngle + _T(",@");  break;
 	case Axis_6_RZ:	  sMSG = _T("#,S,6,") + sAngle + _T(",@");  break;
-	default:		  return 0;		                break;
+	default:		 		return 0;		                	break;
 	}
 	//bool ret = pGlobal->RbtSocket.SendMSG(sMSG);
 	pGlobal->MoveRbtSend(sMSG);
 	ResetEvent(pGlobal->Handle_FinishPOS[0]);
 	ResetEvent(pGlobal->Handle_FinishPOS[1]);
-	DWORD  dwReturn = WaitForMultipleObjects(2, pGlobal->Handle_FinishPOS, FALSE, 20000);//20s的到位超时
+	DWORD  dwReturn = WaitForMultipleObjects(2, pGlobal->Handle_FinishPOS, FALSE, 15000);//20s的到位超时
 	if (dwReturn - WAIT_OBJECT_0 == 0)
 	{
 		pGlobal->AddToRunList(_T("机器人单轴到指定点位"));
@@ -835,8 +849,10 @@ int RobotControldlg::SingleAxisMove(int iAxis, CString sAngle)
 		pGlobal->AddToErrorList(_T("移动到指定点位超时"));
 		ResetEvent(pGlobal->Handle_FinishPOS[0]);
 		ResetEvent(pGlobal->Handle_FinishPOS[1]);
+
 		return 0;
 	}
+	return 0;
 }
 
 int RobotControldlg::X_YSpaceAxisMove(int iAxis, CString slen)
@@ -850,13 +866,16 @@ int RobotControldlg::X_YSpaceAxisMove(int iAxis, CString slen)
 	case Axis_4_RX:	  sMSG = _T("#,M,4,") + slen + _T(",@");  break;
 	case Axis_5_RY:	  sMSG = _T("#,M,5,") + slen + _T(",@");  break;
 	case Axis_6_RZ:	  sMSG = _T("#,M,6,") + slen + _T(",@");  break;
-	default:		  return 0;		                break;
+	default:
+		return 0;
+		break;
+
 	}
 	//bool ret = pGlobal->RbtSocket.SendMSG(sMSG);
 	pGlobal->MoveRbtSend(sMSG);
 	ResetEvent(pGlobal->Handle_FinishPOS[0]);
 	ResetEvent(pGlobal->Handle_FinishPOS[1]);
-	DWORD  dwReturn = WaitForMultipleObjects(2, pGlobal->Handle_FinishPOS, FALSE, 20000);//20s的到位超时
+	DWORD  dwReturn = WaitForMultipleObjects(2, pGlobal->Handle_FinishPOS, FALSE, 15000);//20s的到位超时
 	if (dwReturn - WAIT_OBJECT_0 == 0)
 	{
 		pGlobal->AddToRunList(_T("机器人单轴到指定点位"));
@@ -873,9 +892,9 @@ int RobotControldlg::X_YSpaceAxisMove(int iAxis, CString slen)
 	{
 		pGlobal->AddToErrorList(_T("移动到指定点位超时"));
 		ResetEvent(pGlobal->Handle_FinishPOS[0]);
-		ResetEvent(pGlobal->Handle_FinishPOS[1]);
-		return 0;
+		ResetEvent(pGlobal->Handle_FinishPOS[1]);		
 	}
+	return 0;
 }
 
 int RobotControldlg::RBTIORead(int IONum)
@@ -904,22 +923,22 @@ int RobotControldlg::RBTIORead(int IONum)
 	{
 		pGlobal->AddToErrorList(_T("机器人IO 2s 读取超时"));
 		ResetEvent(pGlobal->Handle_RBTReadIO[0]);
-		ResetEvent(pGlobal->Handle_RBTReadIO[1]);
-		return 0;
+		ResetEvent(pGlobal->Handle_RBTReadIO[1]);		
 	}
+	return 0;
 }
 
 int RobotControldlg::RBTIOReadALL()
 {
 	CString str, sMSG;
 	sMSG = _T("#,IO,4,0,@");
-	pGlobal->BaseRbtSend(sMSG);//拿基础线程发送
-	//bool ret = pGlobal->BaseRbtSocket.SendMSG(sMSG);//拿基础线程发送
+	//pGlobal->BaseRbtSend(sMSG);//拿基础线程发送
+	pGlobal->MoveRbtSend(sMSG);//拿运动线程发送
 
 	ResetEvent(pGlobal->Handle_RBTReadIO[0]);
 	ResetEvent(pGlobal->Handle_RBTReadIO[1]);
 	ResetEvent(pGlobal->Handle_RBTReadIO[2]);
-	DWORD  dwReturn = WaitForMultipleObjects(3, pGlobal->Handle_RBTReadIO, FALSE, 5000);//20s的到位超时
+	DWORD  dwReturn = WaitForMultipleObjects(3, pGlobal->Handle_RBTReadIO, FALSE, 2000);//20s的到位超时
 	if (dwReturn - WAIT_OBJECT_0 == 2)
 	{
 		//pGlobal->AddToRunList(_T(""));
@@ -933,10 +952,33 @@ int RobotControldlg::RBTIOReadALL()
 	}
 	else if (WAIT_TIMEOUT == dwReturn)
 	{
-		pGlobal->AddToErrorList(_T("机器人SOCKET连接异常，请处理....."));
 		ResetEvent(pGlobal->Handle_RBTReadIO[2]);
-		return 0;
+		//////////////////////////---短时间重读IO再处理--////////////////////////////
+		sMSG = _T("#,IO,4,0,@");
+		pGlobal->BaseRbtSend(sMSG);//拿基础线程发送
+		DWORD  dwReturn = WaitForMultipleObjects(3, pGlobal->Handle_RBTReadIO, FALSE, 3000);//20s的到位超时
+		if (dwReturn - WAIT_OBJECT_0 == 2)
+		{
+			for (int i = 0; i < 32; i++)
+			{
+				sCurSingleIO[i] = sCurFullIOVal.Mid(i, 1);
+				iCurSingleIO[i] = _ttoi(sCurSingleIO[i]);
+			}
+			ResetEvent(pGlobal->Handle_RBTReadIO[2]);
+			return 1;
+		}
+		else if (WAIT_TIMEOUT == dwReturn)
+		{
+			ResetEvent(pGlobal->Handle_RBTReadIO[2]);
+			pGlobal->AddToErrorList(_T("机器人SOCKET连接异常，请处理....."));
+			return 0;
+		}
+     //////////////////////////---短时间重读IO再处理--////////////////////////////
+	//	ResetEvent(pGlobal->Handle_RBTReadIO[2]);
+	//	pGlobal->AddToErrorList(_T("机器人SOCKET连接异常，请处理....."));
+	//	return 0;
 	}
+	return 0;
 }
 
 int RobotControldlg::RBTIOSet(int IONum)
@@ -997,9 +1039,12 @@ void RobotControldlg::OnBnClickedStartbasesocket()
 		{
 		//	pGlobal->AddToRunList(_T("机器人服务器连接成功！！"));
 		//	pGlobal->BaseRbtSocket.SendMSG(_T("#,B,1,0,@"));//电机上电
+			Sleep(50);
 			pGlobal->BaseRbtSocket.SendMSG(_T("#,B,3,0,@"));//运动服务器开启
+			Sleep(50);
+			pGlobal->AddToRunList(_T("机器人服务器连接成功！！"));
 			SetDlgItemText(IDC_StartBaseSocket, _T("关闭服务器"));
-			ConWidgetStatue(TRUE);
+			ConWidgetStatue(TRUE);				
 		}
 		else
 		{
@@ -1016,6 +1061,7 @@ void RobotControldlg::OnBnClickedStartbasesocket()
 		pGlobal->AddToRunList(_T("机器人服务器断开连接！！"));
 		SetDlgItemText(IDC_StartBaseSocket, _T("开启服务器"));
 		pGlobal->BaseRbtSocket.m_bConnected = FALSE;
+		CurSpeed = _T("0");
 		KillTimer(1);
 	}
 }
@@ -1126,7 +1172,6 @@ void RobotControldlg::SetIOBtmStatue()
 bool RobotControldlg::OpenClamp()
 {
 	CString sMSG;
-	int ret;
 //	RBTIOReset(29);//关闭运动
 //	Sleep(50);
 	RBTIOReset(31);//夹爪夹紧清零
@@ -1136,13 +1181,15 @@ bool RobotControldlg::OpenClamp()
 	Sleep(100);
 //	RBTIOSet(29); // 夹爪松开
 //	Sleep(100);
+	bIOUpdata = true;
 	for (int i = 0; i < 8; i++)
 	{
 		
 		if (iCurSingleIO[14] == 1 )
-	//	if (RBTIORead(14) == 1)
 		{
 			pGlobal->AddToRunList(_T("夹爪打开成功"));
+			bIOUpdata = false;
+			Sleep(500);
 			RBTIOReset(30); // 夹爪松开清零
 			Sleep(100);
 			return true;
@@ -1153,34 +1200,27 @@ bool RobotControldlg::OpenClamp()
 		}
 	}
 	pGlobal->AddToErrorList(_T("夹爪打开4s超时"));
+	bIOUpdata = false;
 	return false;
 }
 
 bool RobotControldlg::CloseClamp()
 {
 	CString sMSG;
-	bool ret;
-	//if (iCurSingleIO[29] == 1)
-	//{
-	//	pGlobal->AddToRunList(_T("夹爪已处于夹紧状态"));
-	//	return true;
-	//}
-//	RBTIOReset(29);//夹爪运动置0
-//	Sleep(100);
+
 	RBTIOReset(30);//夹爪松开置0
 	Sleep(100);
 
 	RBTIOSet(31);//夹爪夹紧
 	Sleep(100);
-//	RBTIOSet(29);//夹爪夹紧
-//	Sleep(100);
-//	Sleep(2000);
-	for (int i = 0; i < 8; i++)
+	bIOUpdata = true;
+	for (int i = 0; i < 10; i++)
 	{
 		if (iCurSingleIO[15] == 1)//检测夹紧到位信号
-		//if (RBTIORead(15) == 1)
 		{
 			pGlobal->AddToRunList(_T("夹爪夹紧成功"));
+			bIOUpdata = false;
+			Sleep(500);
 			RBTIOReset(31); // 夹爪松开清零
 			Sleep(100);
 			return true;
@@ -1190,6 +1230,7 @@ bool RobotControldlg::CloseClamp()
 			Sleep(500);
 		}
 	}
+	bIOUpdata = false;
 	pGlobal->AddToErrorList(_T("夹爪夹紧4S超时，请确认夹爪内是否有料"));
 	return false;
 }
@@ -1197,7 +1238,7 @@ bool RobotControldlg::CloseClamp()
 bool RobotControldlg::IniIOClamp()
 {
 	CString sMSG;
-	int ret;
+
 	//RBTIOSet(25);//停止
 	//Sleep(50);
 	RBTIOSet(28);//报警复位
@@ -1212,17 +1253,17 @@ bool RobotControldlg::IniIOClamp()
 //	Sleep(50);
 	RBTIOReset(30);//松开信号清除
 	Sleep(100);
-	RBTIOReset(31);//夹紧信号清除
-	Sleep(100);
-	RBTIOReset(25);//停止
+	RBTIOReset(31);//夹紧信号清
 	Sleep(100);
 	RBTIOSet(24);//回原点/复位
-	Sleep(100);
+	Sleep(500);
+	bIOUpdata = true;
 	for (int i = 0; i < 10; i++)
 	{
 		if (iCurSingleIO[10] == 1)
 		{
 			pGlobal->AddToRunList(_T("电爪初始化复位完成"));
+
 			RBTIOReset(24);//回原点信号清除
 			Sleep(100);
 			OpenClamp();
@@ -1233,12 +1274,14 @@ bool RobotControldlg::IniIOClamp()
 			if (i == 9)
 			{
 				pGlobal->AddToErrorList(_T("电爪复位5s超时"));
+				bIOUpdata = false;
 				return false;
 			}
 			Sleep(500);
 		}
 	}
 	//OpenClamp();
+	bIOUpdata = false;
 	return true;
 }
 void RobotControldlg::OnBnClickedBtnUpdataiobtnstatue()
@@ -1541,4 +1584,23 @@ void RobotControldlg::OnBnClickedCheckOpentranspos()
 		sText = _T("0");
 	}
 	WritePrivateProfileString(_T("ProcessDATA"), _T("NeedTransPos"), sText, _T(".\\SystemInfo.ini"));
+}
+
+
+void RobotControldlg::OnBnClickedBtnSetgetdis2()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CString str;
+	GetDlgItemText(IDC_EDIT_PutProDis, str);
+	dbPutProDis = _ttof(str);
+	WritePrivateProfileString(_T("ProcessDATA"), _T("RbtUpDis"), str, _T(".\\SystemInfo.ini"));
+}
+
+
+void RobotControldlg::OnBnClickedBtnSetgetputdis()
+{
+	CString str;
+	GetDlgItemText(IDC_EDIT_GetPutDownDis, str);
+	dbGetPutDownDis = _ttof(str);
+	WritePrivateProfileString(_T("ProcessDATA"), _T("GetPutDownDis"), str, _T(".\\SystemInfo.ini"));
 }

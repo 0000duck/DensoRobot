@@ -93,7 +93,7 @@ void ClientSocket_UW::OnConnect(int nErrorCode)
 	{
 		bAlive = TRUE;
 		pGlobal->AddToRunList(_T("UWSocket连接成功"));
-		pGlobal->UWdlg.UW_Login_Send(_T("ur"));
+		pGlobal->UWdlg.UW_Login_Send(_T("robot1"));
 		AsyncSelect(FD_READ);  //提请一个"读"的网络事件，准备接收
 	}
 	else

@@ -71,7 +71,10 @@ public:
 	CString  sCurFullIOVal;//当前数组 位置
 	CString  sCurSingleIO[32];//每个IO的值
 	int  iCurSingleIO[32];//每个IO的值
-	double dbGetProDis;//取料需要下降的高度
+	int  iWorkType;//0,正常取放料；1、盘点用
+	double dbGetProDis;//取料需要下降的高度，视觉拍照用，
+	double dbPutProDis;//放料需要上升和下降的高度，盘点可调用，扫码抬起高度基于视觉定位
+	double dbGetPutDownDis;//基于视觉定位高度,定完位置后，接下来都以这个位置去取放料，节省效率，值为视觉高度下降高度
 	int iProcessNum;//N组取料放料点
 	bool bNeedTransPos;//是否开启中转位置
 
@@ -153,4 +156,6 @@ public:
 	afx_msg void OnBnClickedBtnIniclamp();
 	afx_msg void OnBnClickedBtnSetprocessnum();
 	afx_msg void OnBnClickedCheckOpentranspos();
+	afx_msg void OnBnClickedBtnSetgetdis2();
+	afx_msg void OnBnClickedBtnSetgetputdis();
 };

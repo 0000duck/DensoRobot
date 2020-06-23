@@ -187,7 +187,9 @@ void ClientSocket_Robot::DataProcess()
 		{
 			pGlobal->RBTCTdlg.sCurFullIOVal = str;
 			SetEvent(pGlobal->Handle_RBTReadIO[2]);
-			SetEvent(pGlobal->Handle_FinishPOS[0]);//串号后导致的机器停止运行的问题，这里给它完成信号，让它继续运动
+		//	AsyncSelect(FD_WRITE);//触发Socket的OnSend函数
+		//	pGlobal->AddToRunList(_T("网络串号后重新给Robot发送相应动作!!!!!!"));
+		//	SetEvent(pGlobal->Handle_FinishPOS[0]);//串号后导致的机器停止运行的问题，这里给它完成信号，让它继续运动
 		}
 	}
 	return;

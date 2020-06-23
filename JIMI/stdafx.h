@@ -58,6 +58,12 @@
 #define WM_BaseRbtSend (WM_USER + 4)  //基础机器人消息播放
 #define WM_MoveRbtSend (WM_USER + 5)  //运动机器人消息播放
 #define WM_VisionSend (WM_USER + 6)  //视觉基础消息播放
+#define WM_VisUpdataBTN (WM_USER + 7)  //更新视觉返回值后的状态显示
+#define WM_VisNumLog (WM_USER + 8)  //更新视觉返回值后台记录数量
+
+#define WM_UWNumLog (WM_USER + 9)  //更新UW返回值后台记录数量
+#define WM_UWUpdataBTN (WM_USER + 10)  //更新UW状态返回值后的状态显示
+
 #include "JIMIDlg.h"
 
 //类型转换
@@ -67,6 +73,8 @@ CString toCString(string str);
 void CStringSplit(CString &strSource, CString *strDes, CString strSplitChar);//split函数的应用
 CString ConvertUTF8ToCString(std::string utf8str);//string类型的utf-8字符串转为CString类型的unicode字符串
 string _UnicodeToUtf8(CString Unicodestr);//CString类型的unicode字符串转为string类型的utf-8字符串
+
+BOOL IsNumber(const CString& strTest);//只判断数字
 #define Sigle_MOLDE 0
 #define X_Y_MOLDE 1
 
@@ -76,7 +84,7 @@ string _UnicodeToUtf8(CString Unicodestr);//CString类型的unicode字符串转为string
 #define Move_P 4    //PTP插补移动到该点，最快
 #define Move_L 5    //直线插补移动到该点，安全
 
-#define Axis_1_X 1 
+#define Axis_1_X  1 
 #define Axis_2_Y  2 
 #define Axis_3_Z  3  
 #define Axis_4_RX  4    
@@ -88,5 +96,14 @@ string _UnicodeToUtf8(CString Unicodestr);//CString类型的unicode字符串转为string
 #define RbtMarkPut 2 //放料位置定位
 #define RbtGet 3  //取料
 #define RbtPut 4    //放料
+
+#define Vis_True  1    //有料可夹
+#define Vis_False 2    //刀卡异常，有料不可夹
+#define Vis_Null  3    //无料，空刀卡
+
+#define UW_True   1    //扫码成功
+#define UW_False  2    //扫码失败，需要人工
+#define UW_Error  3    //有料不可夹，刀卡异常，需要人工
+#define UW_Null   4    //扫码失败
 
 extern CJIMIDlg* pGlobal;//针对主对话框的一个全局指针
