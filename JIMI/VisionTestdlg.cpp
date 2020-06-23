@@ -447,7 +447,7 @@ int VisionTestdlg::GoGetPosAndMark(int iPos)
 	std::string DevStr = root.toStyledString();
 	sJsonText = toCString(DevStr);
 	pGlobal->VisionSend(sJsonText);
-//	pGlobal->AddToRunList(_T("给视觉发送:") + sJsonText);
+	pGlobal->AddToRunList(_T("给视觉发送:") + sJsonText);
 
 	///////////////////json/////////////////////
 	ResetEvent(pGlobal->Handle_VisionRetPOS);
@@ -502,6 +502,7 @@ int VisionTestdlg::GetDataProcess()
 		if (reader.parse(sJsonRet, root))
 		{
 			std::string code;
+			
 			iPosNum = root["PosNum"].asInt();//一般为5个点位，一拍三为3个
 			int file_size = root["PosDetail"].size();
 			for (int i = 0; i < file_size; i++)
@@ -548,7 +549,7 @@ int VisionTestdlg::GoGetShowMarkPos()
 		{
 			ret = ipos - 2 + k;
 		}
-		else if (iPosNum == 2 || iPosNum == 3)//一拍3
+		else if (iPosNum == 2|| iPosNum == 3)//一拍3
 		{
 			ret = ipos - 1 + k;
 		}
@@ -599,6 +600,7 @@ void VisionTestdlg::GoSelPos()
 	{
 		ipos = ipos - 1 + iget;
 	}
+
 	for (int i = 0; i < 7; i++)
 	{
 		sPos[i] = sVisGetPos[ipos][i];

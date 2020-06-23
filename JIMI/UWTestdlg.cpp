@@ -144,7 +144,7 @@ void UWTestdlg::OnBnClickedBtnRetack()
 
 void UWTestdlg::OnBnClickedBtnOutfinish()
 {
-	ithread = 9;
+	ithread = 2;
 	AfxBeginThread(UWDlgThread, this);
 }
 
@@ -174,7 +174,6 @@ UINT UWTestdlg::UWDlgThread(LPVOID lparam)
 	case 6:  		pdlg->UW_AskPostion_Send();		                       break; //位置请求
 	case 7:  		pdlg->UW_ScanMaterilaInfo_Send(pGlobal->UWdlg.sMaterialId,1000);       break; //机器人扫描包发送
 	case 8:  		pdlg->UW_ScanMaterilaInfo_Error_Send(pGlobal->UWdlg.sMaterialId,4);	   break; //机器人错误码
-	case 9:  		pdlg->UW_ReadMessage_Send(pGlobal->UWdlg.sMaterialId,0,0,1000,1,0);   break; //机器人盘点数据发送,test
 	default:
 		break;
 	}
@@ -541,7 +540,6 @@ int UWTestdlg::UW_Read_forklift_reach_DealData(CString str)
 		std::string code;
 		iCmdid = root["cmdId"].asInt();
 		itaskId = root["taskId"].asInt();
-		itype = root["type"].asInt();  //新框架，盘点在这个位置
 		iboxId = root["boxId"].asInt();
 	}
 	return 0;
@@ -571,6 +569,7 @@ int UWTestdlg::UW_Read_forklift_position_info_DealData(CString str)
 		iXpos = root["xPosition"].asInt();
 		iYpos = root["yPosition"].asInt();
 		iboxId = root["boxId"].asInt();
+		itype = root["type"].asInt();
 		iQuantity = root["quantity"].asInt();
 		sQuantity.Format(_T("%d"), iQuantity);
 		//sQuantity = toCString(root["quantity"].asString());//两个都赋值吧 怕用的上
@@ -634,42 +633,4 @@ void UWTestdlg::OnBnClickedBtnManuclear()
 	WritePrivateProfileString(_T("ProcessDATA"), _T("NeedReady"), _T("1"), _T(".\\SystemInfo.ini"));
 	pGlobal->AddToRunList(_T("人工手动移除料盒信息成功！！！"));
 	AfxMessageBox(_T("人工手动移除料盒信息成功！！！"));
-}
-
-int UWTestdlg::UW_ReadMessage_Send(CString sCode, int iQuantity, int ix, int iy, int ires,int iflag)
-{
-	//{
-	//	   "cmdCode":"send_message",
-	//		"cmdId" : 1,
-	//		"taskId" : 123,
-	//		"boxId" : 1,
-	//		"xPosition" : 1,
-	//		"yPosition" : 1,
-	//		"materialId" : "1111100",
-	//		"quantity" : 1245,
-	//		"result" : 1,
-	//		"endFlag" :0
-	//}
-	CString sJsonText;
-
-	Json::Value root;
-
-	// 组装json内容
-	root["cmdCode"] = "inv_material_scan_info";
-	root["cmdId"] = iCmdid + 1;
-	root["taskId"] = itaskId;
-	root["boxId"] = iboxId;
-	root["xPosition"] = ix;
-	root["yPosition"] = iy;
-	root["materialId"] = toString(sCode);
-	root["quantity"] = iQuantity;
-	root["result"] = ires;
-	root["endFlag"] = iflag;
-
-	std::string DevStr = root.toStyledString();
-	sJsonText = toCString(DevStr);
-	pGlobal->UWSocekt.UW_Send(sJsonText);
-	pGlobal->AddToRunList(_T("给UW发送:") + sJsonText);
-	///////////////////json/////////////////////
-	return 0;
 }

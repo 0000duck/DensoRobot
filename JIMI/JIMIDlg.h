@@ -90,22 +90,18 @@ public:
 	static UINT InitialALLThread(LPVOID pParam);
 	static UINT AutoRunThread(LPVOID pParam);
 	static UINT CheckRbtMoveSocketAliveThread(LPVOID pParam);
-
 	int UW_OFF_MainRunProgram();//return 1234567分别对应相应点位，则显示到位异常,不带UW跑的
 	int UW_ON_MainRunProgram();//20191225 wade add 仓库盘点用
+	int UW_ON_MainRunProgramAsFolow();//return 1234567分别对应相应点位，必须先出库再入库
 
-
-	int UW_OUT_Process();//2.0.0新版本出库函数 wade20200427
-	int UW_CheckALL_Process();//2.0.0新版本盘点函数 wade20200427
-	int UW_GoCheckId(int icheckpos, bool &bGetId);//2.0.0新版本wade20200427 前往刀卡当前位置进行扫码动作
-	int iUWetResult[40];////1、扫码正常；2、扫码异常；3、有料不可夹；4、无料；
 	bool bmark;//重启软件或者，新来料都要进行定位
 	
 	bool InitialALL();//return 1234567分别对应相应点位，则显示到位异常
 	bool InitialResetevent();
 	int iRbtStatue;//机器人状态，0123456
 
-	int UW_Num_Code_Check_Process();//2.0.0只能做出库用
+	int UW_OUT_IN_ROBOT_Process();//UW出库机械臂取料流程
+	int UW_Num_Code_Check_Process();//20191225 wade add UW系统盘点用函数
 	int UW_ScanCode_Process();//uw的扫码动作，可能一次不成要扫两次;//0为正常数据返回，1为物料总数量异常，2为未扫码到与UW匹配的物料ID,3为超时
 	int UW_ReMoveANDScanCode_Process();//第一次没有扫到码，然后
 	int BackToStartPos();//让机械臂回到原点
@@ -158,7 +154,6 @@ protected:
 	afx_msg LRESULT OnMoveRbtSend(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnVisionSend(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnVisUpdataStatue(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnUWUpdataStatue(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnVisLogStatue(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUWLogStatue(WPARAM wParam, LPARAM lParam);
 public:

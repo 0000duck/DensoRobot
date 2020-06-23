@@ -60,10 +60,7 @@
 #define WM_VisionSend (WM_USER + 6)  //视觉基础消息播放
 #define WM_VisUpdataBTN (WM_USER + 7)  //更新视觉返回值后的状态显示
 #define WM_VisNumLog (WM_USER + 8)  //更新视觉返回值后台记录数量
-
 #define WM_UWNumLog (WM_USER + 9)  //更新UW返回值后台记录数量
-#define WM_UWUpdataBTN (WM_USER + 10)  //更新UW状态返回值后的状态显示
-
 #include "JIMIDlg.h"
 
 //类型转换

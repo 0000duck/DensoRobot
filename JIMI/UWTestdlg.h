@@ -55,8 +55,6 @@ public:
 	int UW_AskPostion_Send();//机械臂向UW请求坐标
 	int UW_ScanMaterilaInfo_Send(CString sCode, int iQuantity);//如果把扫到得码发送给UW，动作正常
 	int UW_ScanMaterilaInfo_Error_Send(CString sCode, int ierrorCode);//动作异常，比如错误码 1：夹空；2：码不对应；3：数量异常（找不到，或者数量小于0）；4：机械臂异常
-
-	int UW_ReadMessage_Send(CString sCode, int iQuantity, int ix,int iy,int ires, int iflag);//机械臂逐个盘点，数据发送；20200427 wade add
     //---------------------------------------//
 //////////////////////////////////////////////
 	int UW_Read_cmdcode_DealData(CString str);//读取cmdcode数据与处理数据，第一步做总判断的

@@ -169,8 +169,8 @@ BOOL RobotControldlg::OnInitDialog()
 	ReadPosFromINI();
 	InsertDataPosList();
 	CurSpeed = _T("0");
-	pGlobal->pJimiThread[2] = AfxBeginThread(IOUpdatdaThread, this);//
-	pGlobal->pJimiThread[2]->m_bAutoDelete = TRUE;
+	AfxBeginThread(IOUpdatdaThread, this);//
+
 	return TRUE;  
 }
 
@@ -195,7 +195,7 @@ void RobotControldlg::OnBnClickedBtnIpconnect()
 
 			BaseWidgetStatue(TRUE);
 			MoveWidgetStatue(TRUE);
-			//bIOUpdata = true;
+		//	bIOUpdata = true;
 			//SetTimer(1, 500, NULL);
 
 		}
@@ -934,7 +934,6 @@ int RobotControldlg::RBTIOReadALL()
 	sMSG = _T("#,IO,4,0,@");
 	//pGlobal->BaseRbtSend(sMSG);//拿基础线程发送
 	pGlobal->MoveRbtSend(sMSG);//拿运动线程发送
-
 	ResetEvent(pGlobal->Handle_RBTReadIO[0]);
 	ResetEvent(pGlobal->Handle_RBTReadIO[1]);
 	ResetEvent(pGlobal->Handle_RBTReadIO[2]);
@@ -1263,7 +1262,6 @@ bool RobotControldlg::IniIOClamp()
 		if (iCurSingleIO[10] == 1)
 		{
 			pGlobal->AddToRunList(_T("电爪初始化复位完成"));
-
 			RBTIOReset(24);//回原点信号清除
 			Sleep(100);
 			OpenClamp();
@@ -1599,6 +1597,7 @@ void RobotControldlg::OnBnClickedBtnSetgetdis2()
 
 void RobotControldlg::OnBnClickedBtnSetgetputdis()
 {
+	// TODO: 在此添加控件通知处理程序代码
 	CString str;
 	GetDlgItemText(IDC_EDIT_GetPutDownDis, str);
 	dbGetPutDownDis = _ttof(str);

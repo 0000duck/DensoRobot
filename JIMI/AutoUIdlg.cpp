@@ -266,7 +266,7 @@ void AutoUIdlg::UpdataUWBTNstatue()
 		int ret[40];
 		for (int i = 0; i < 40; i++)
 		{
-			ret[i] = pGlobal->iUWetResult[i];//1、扫码成功；2、扫码失败、3、刀卡不可夹；4、无料；
+			ret[i] = pGlobal->Visiondlg.iVisGetResult[i];//1、扫码成功；2、扫码失败、3、刀卡不可夹；4、无料；
 		}
 		m_UWCST_1.UWChangeColor(ret[0]);
 		m_UWCST_2.UWChangeColor(ret[1]);

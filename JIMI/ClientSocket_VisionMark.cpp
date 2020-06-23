@@ -119,7 +119,7 @@ bool ClientSocket_VisionMark::SendMSG(CString str)
 	}
 	else
 	{
-		pGlobal->AddToErrorList(_T("视觉服务器尚未连接，发送无效"));
+		pGlobal->AddToErrorList(_T("基础服务器尚未连接，发送无效"));
 	}
 
 	
