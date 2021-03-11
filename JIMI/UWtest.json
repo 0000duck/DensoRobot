@@ -1,0 +1,32 @@
+{
+   "cmdcode" : "out",
+   "cmdid" : 1,
+   "list" : [
+      {
+         "col" : 1,
+         "materialNo" : "132443242",
+         "materialTypeId" : 103,
+         "productionTime" : "2019-11-12",
+         "quantity" : 100,
+         "row" : 1
+      },
+      {
+         "col" : 1,
+         "materialNo" : "132443242",
+         "materialTypeId" : 103,
+         "productionTime" : "2019-11-12",
+         "quantity" : 100,
+         "row" : 2
+      },
+      {
+         "col" : 1, //ÁÐ
+         "materialNo" : "132443242",
+         "materialTypeId" : 103,
+         "productionTime" : "2019-11-12",
+         "quantity" : 100,
+         "row" : 3 //ÐÐ
+      }
+   ],
+   "supplier" : "ÖÇÈñµÃ",
+   "taskId" : 1
+}
